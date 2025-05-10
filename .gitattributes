@@ -1,0 +1,4 @@
+**/secret.tfvars filter=git-crypt diff=git-crypt
+credentials/** filter=git-crypt diff=git-crypt
+**/secrets/** filter=git-crypt diff=git-crypt
+**/*.pem filter=git-crypt diff=git-crypt
