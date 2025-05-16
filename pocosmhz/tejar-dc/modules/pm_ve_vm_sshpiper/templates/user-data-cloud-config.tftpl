@@ -1,0 +1,126 @@
+#cloud-config
+%{~ if need_gnupg }
+# This is for installing gnupg first, then the rest:
+bootcmd:
+  - DEBIAN_FRONTEND=noninteractive apt-get -yq update
+  - DEBIAN_FRONTEND=noninteractive apt-get -yq install gnupg
+%{~ endif }
+manage_etc_hosts: true
+timezone: ${ timezone }
+users:
+  - name: root
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ root_ssh_key }
+  - name: sshpiper
+    shell: /bin/nologin
+    system: true
+    homedir: /nonexistent
+    no_create_home: true
+%{~ for user in admin_users }
+  - name: ${ user.name }
+    gecos: ${ user.gecos }
+    groups:
+      - sudo
+      - users
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ user.ssh_key }
+    sudo: ALL=(ALL) NOPASSWD:ALL
+%{~ endfor }
+package_update: true
+packages:
+  - qemu-guest-agent
+write_files:
+  # Download sshpiper
+  - path: /run/scripts/download-sshpiper.sh
+    content: |
+      #!/bin/sh
+      VERS=${ sshpiper_version }
+      GITHUB_URL=https://github.com/tg123/sshpiper
+      FNAME=sshpiperd_with_plugins_linux_x86_64.tar.gz
+      DLNAME=/tmp/$FNAME
+      REL_URL=$GITHUB_URL/releases/download/v$VERS/$FNAME
+      APPDIR=/usr/local/bin/sshpiperd
+      wget -c $REL_URL -O $DLNAME
+      mkdir -p $APPDIR
+      tar xvzf $DLNAME -C $APPDIR
+    permissions: '0750'
+  # Generate server keys for sshpiper
+  - path: /run/scripts/sshpiper-gen-server-keys.sh
+    content: |
+      #!/bin/sh
+      # Create server key folder
+      mkdir -p /etc/sshpiperd/keys
+      for type in rsa ecdsa ed25519 ; do
+        # Generate server keys
+        ssh-keygen -t $type -f /etc/sshpiperd/keys/ssh_host_$${type}_key -N '' -C "sshpiperd" -q
+      done
+      # Set permissions
+      chmod 0400 /etc/sshpiperd/keys/*
+      chown -R sshpiper:sshpiper /etc/sshpiperd/keys
+    permissions: '0750'
+  # systemd service for sshpiper
+  # Credits: https://wiki.psuter.ch/doku.php?id=ssh_connection_routing_based_on_username
+  - path: /etc/systemd/system/sshpiperd.service
+    content: |
+      [Unit]
+      Description=SSHPiper Daemon
+      Requires=network.target
+      After=network.target
+
+      [Service]
+      WorkingDirectory=/usr/local/bin/sshpiperd
+      ExecStart=/usr/local/bin/sshpiperd/sshpiperd --server-key '/etc/sshpiperd/keys/*key' plugins/yaml --config /etc/sshpiperd/sshpiperd.yaml -- plugins/failtoban
+      Restart=always
+      # Restart service after 10 seconds if node service crashes
+      RestartSec=10
+      # Output to journal
+      StandardOutput=journal
+      StandardError=journal
+      #SyslogIdentifier=sshpiperd
+      # use root if sshpiperd is configured to listen on port 22, otherwise use some other user as it is more secure should sshpiperd let you down. 
+      User=sshpiper
+      Group=sshpiper
+
+      [Install]
+      WantedBy=multi-user.target
+    permissions: '0644'
+  - path: /etc/sshpiperd/sshpiperd.yaml
+    content: |
+      # yaml-language-server: $schema=https://raw.githubusercontent.com/tg123/sshpiper/master/plugin/yaml/schema.json
+      version: "1.0"
+      pipes:
+%{~ for user in admin_users }
+%{~ for host in hosts }
+      - from:
+          - username: "${ user.name }.${ host.name }"
+            authorized_keys: /etc/sshpiperd/server/${ user.name }.key.pub
+        to:
+          host: ${ host.ip }:22
+          username: "root"
+          ignore_hostkey: true
+          private_key: /etc/sshpiperd/client/root.${ host.name}.key
+%{~ endfor }
+%{~ endfor }
+    permissions: '0400'
+  # SSH keys for sshpiper
+%{~ for user in admin_users }
+  - path: /etc/sshpiperd/server/${ user.name }.key.pub
+    content: "${ user.ssh_key }"
+    permissions: '0400'
+%{~ endfor }
+%{~ for host in hosts }
+  - path: /etc/sshpiperd/client/root.${ host.name }.key
+    encoding: b64
+    content: ${ base64encode(host.ssh_key) }
+    permissions: '0400'
+%{~ endfor }
+runcmd:
+  - systemctl --now enable qemu-guest-agent
+  - sh /run/scripts/download-sshpiper.sh
+  - sh /run/scripts/sshpiper-gen-server-keys.sh
+  - systemctl daemon-reload 
+  - chown -R sshpiper:sshpiper /etc/sshpiperd/*
+  - systemctl --now enable sshpiperd.service
+  - echo "done" > /tmp/cloud-config.done
