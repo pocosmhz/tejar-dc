@@ -1,9 +1,11 @@
 # tejar-dc
 Tejar data center IaC repository.
 
+<img src="tejas-cocidas.jpg" alt="Get to know Tejar Artesano Horcajo at https://redmaestros.com/maestros-cat/tejar-artesano-horcajo/" width="200"> + <img src="datacenter.jpg" alt="Long, long time ago, in a galaxy far, far away... https://www.acens.com" width="250">
+
 ## The data center
 
-Please be welcome to my humble data center. See how it is built here:
+Please be welcome to my h{umble data center|ome lab}. See how it is built here:
 - [Part I](https://manuelmc.pocosmhz.org/2025/04/13/proxmox-home-cluster-i.html)
 - [Part II](https://manuelmc.pocosmhz.org/2025/04/15/proxmox-home-cluster-ii.html)
 
