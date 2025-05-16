@@ -1,7 +1,7 @@
 # tejar-dc
 Tejar data center IaC repository.
 
-<img src="tejas-cocidas.jpg" alt="Get to know Tejar Artesano Horcajo at https://redmaestros.com/maestros-cat/tejar-artesano-horcajo/" width="200"> + <img src="datacenter.jpg" alt="Long, long time ago, in a galaxy far, far away... https://www.acens.com" width="250">
+<img src="tejas-cocidas.jpg" title="Tejar" alt="Get to know Tejar Artesano Horcajo at https://redmaestros.com/maestros-cat/tejar-artesano-horcajo/" width="200"> + <img src="datacenter.jpg" title="Datacenter" alt="Long, long time ago, in a galaxy far, far away... https://www.acens.com" width="250">
 
 ## The data center
 
