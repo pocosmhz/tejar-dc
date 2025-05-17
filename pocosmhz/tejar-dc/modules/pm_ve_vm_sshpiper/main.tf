@@ -16,6 +16,7 @@ resource "proxmox_virtual_environment_file" "meta_data_cloud_config" {
   }
 }
 
+# We will include this very host in the list of hosts we allow access to.
 resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
   content_type = "snippets"
   datastore_id = var.snippets_datastore_id
@@ -26,7 +27,13 @@ resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
       timezone         = var.timezone
       root_ssh_key     = tls_private_key.pk.public_key_openssh
       admin_users      = var.admin_users
-      hosts            = var.hosts
+      hosts            = concat([
+        {
+          name    = var.hostname
+          ip      = split("/", var.ip_address)[0]
+          ssh_key = tls_private_key.pk.private_key_pem
+        }],
+        var.hosts)
       sshpiper_version = var.sshpiper_version
     })
     file_name = "${var.hostname}-user-data-cloud-config.yaml"
