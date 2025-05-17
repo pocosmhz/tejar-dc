@@ -94,7 +94,7 @@ write_files:
 %{~ for user in admin_users }
 %{~ for host in hosts }
       - from:
-          - username: "${ user.name }.${ host.name }"
+          - username: "root.${ host.name }"
             authorized_keys: /etc/sshpiperd/server/${ user.name }.key.pub
         to:
           host: ${ host.ip }:22
