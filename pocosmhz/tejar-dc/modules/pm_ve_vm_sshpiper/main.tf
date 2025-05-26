@@ -23,17 +23,17 @@ resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
   node_name    = var.node_id
   source_raw {
     data = templatefile("${path.module}/templates/user-data-cloud-config.tftpl", {
-      need_gnupg       = false
-      timezone         = var.timezone
-      root_ssh_key     = tls_private_key.pk.public_key_openssh
-      admin_users      = var.admin_users
-      hosts            = concat([
+      need_gnupg   = false
+      timezone     = var.timezone
+      root_ssh_key = tls_private_key.pk.public_key_openssh
+      admin_users  = var.admin_users
+      hosts = concat([
         {
           name    = var.hostname
           ip      = split("/", var.ip_address)[0]
           ssh_key = tls_private_key.pk.private_key_pem
         }],
-        var.hosts)
+      var.hosts)
       sshpiper_version = var.sshpiper_version
     })
     file_name = "${var.hostname}-user-data-cloud-config.yaml"
