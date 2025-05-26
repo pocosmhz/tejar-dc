@@ -12,13 +12,9 @@ module "pm_jump_host" {
   image_id           = module.pm_ve_vm_debian_cloud_image[var.proxmox_jump_host.node].id
   timezone           = var.proxmox_timezone
   admin_users        = var.admin_users
-  hosts = [
-    {
-      name    = "test-debian12"
-      ip      = "192.168.18.150"
-      ssh_key = tls_private_key.debiantest_pk.private_key_pem
-    }
-  ]
+  hosts = flatten(
+    [for k, v in module.k8s_clusters : v.hosts]
+  )
   ha_group = proxmox_virtual_environment_hagroup.pm_ve_hagroups["pve01"].id
   tags     = ["debian", "ssh-piper"]
 }
