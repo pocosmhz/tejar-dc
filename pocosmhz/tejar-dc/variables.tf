@@ -177,3 +177,115 @@ variable "admin_users" {
     }
   ]
 }
+
+# Proxmox Kubernetes clusters
+variable "proxmox_k8s_clusters" {
+  description = "Proxmox Kubernetes clusters"
+  type = map(object({
+    comment                     = string
+    apiserver_advertise_address = string
+    apiserver_bind_port         = number
+    k8s_version = object({
+      major = number
+      minor = number
+      patch = number
+      build = optional(string, "1.1")
+    })
+    networking = object({
+      plugin = string
+      version = object({
+        major = number
+        minor = number
+        patch = number
+      })
+      pod_cidr = string
+    })
+    os_flavor  = optional(string, "debian")
+    os_version = optional(string, "bookworm")
+    nodes = map(object({
+      ip_address = string
+      ip_gateway = string
+      cpu_cores  = number
+      node_type  = string
+      tainted    = bool
+      pve_node   = string
+      memory     = number
+      disk_size  = number
+      # Optional parameters, per node
+      hosts_entries_override = optional(list(object({
+        ip_address = string
+        hostname   = string
+      })), null)
+      version_override = optional(object({
+        major = number
+        minor = number
+        patch = number
+        build = optional(string, "1.1")
+      }))
+      networking_override = optional(object({
+        plugin = string
+        version = object({
+          major = number
+          minor = number
+          patch = number
+        })
+        pod_cidr = string
+      }), null)
+      image_list_override = optional(map(object({
+        id   = string
+        size = number
+      })), null)
+      os_flavor_override  = optional(string, "debian")
+      os_version_override = optional(string, "bookworm")
+      certificate_key     = optional(string, "")
+    }))
+    tags     = list(string)
+    timezone = optional(string, "UTC")
+  }))
+  default = {
+    k8s01 = {
+      comment                     = "Kubernetes cluster 01"
+      apiserver_advertise_address = "192.168.1.5"
+      apiserver_bind_port         = 6443
+      tags                        = ["k8s", "debian"]
+      timezone                    = "Europe/Madrid"
+      k8s_version = {
+        major = 1
+        minor = 31
+        patch = 2
+        build = "1.1"
+      }
+      networking = {
+        plugin = "calico"
+        version = {
+          major = 3
+          minor = 30
+          patch = 0
+        }
+        pod_cidr = "172.20.0.0/16"
+      }
+      nodes = {
+        k8s01cp01 = {
+          ip_address = "192.168.1.5/24"
+          ip_gateway = "192.168.1.1"
+          node_type  = "cp"
+          tainted    = true
+          pve_node   = "pve01"
+          cpu_cores  = 2
+          memory     = 4096
+          disk_size  = 20
+        }
+        k8s01w01 = {
+          ip_address = "192.168.1.6/24"
+          ip_gateway = "192.168.1.1"
+          node_type  = "worker"
+          tainted    = false
+          pve_node   = "pve02"
+          cpu_cores  = 2
+          memory     = 4096
+          disk_size  = 20
+        }
+      }
+    }
+  }
+}
