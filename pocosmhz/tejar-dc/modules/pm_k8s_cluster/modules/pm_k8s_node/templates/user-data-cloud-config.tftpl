@@ -1,0 +1,233 @@
+#cloud-config
+%{~ if need_gnupg }
+# This is for installing gnupg first, then the rest:
+bootcmd:
+  - DEBIAN_FRONTEND=noninteractive apt-get -yq update
+  - DEBIAN_FRONTEND=noninteractive apt-get -yq install gnupg
+%{~ endif }
+apt:
+  preserve_sources_list: true
+  sources:
+    kubernetes:
+      source: deb [signed-by=$KEY_FILE] https://pkgs.k8s.io/core:/stable:/v${k8s_version.major}.${k8s_version.minor}/deb/ /
+      key: |
+        ${ indent(8, k8s_gpg_key) }
+    docker:
+      source: deb [arch=amd64 signed-by=$KEY_FILE] https://download.docker.com/linux/${os_flavor} ${os_version} stable
+      key: |
+        ${ indent(8, docker_gpg_key) }
+manage_etc_hosts: false
+timezone: ${ timezone }
+users:
+  - name: root
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ root_ssh_key }
+%{~ for user in admin_users }
+  - name: ${ user.name }
+    gecos: ${ user.gecos }
+    groups:
+      - sudo
+      - users
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ user.ssh_key }
+    sudo: ALL=(ALL) NOPASSWD:ALL
+%{~ endfor }
+package_update: true
+packages:
+  - qemu-guest-agent
+  - net-tools
+  - bash-completion
+  - apt-transport-https
+  - ca-certificates
+  - curl
+write_files:
+  # Add entries to /etc/hosts
+  - path: /run/scripts/hosts-entries.sh
+    content: |
+      #!/bin/bash
+%{~ for entry in hosts_entries }
+      echo "${ entry.ip_address } ${ entry.hostname }" >> /etc/hosts
+%{~ endfor } 
+    permissions: '0750'
+  # Add modules to load for Kubernetes
+  - path: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+    permissions: '0644'
+  - path: /run/scripts/load-kernel-modules.sh
+    content: |
+      #!/bin/bash
+      (lsmod | grep overlay) || modprobe overlay
+      (lsmod | grep br_netfilter) || modprobe br_netfilter
+    permissions: '0750'
+  # Sysctl settings for Kubernetes
+  - path: /etc/sysctl.d/k8s.conf
+    content: |
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.bridge.bridge-nf-call-iptables = 1
+      net.ipv4.ip_forward = 1
+      vm.vfs_cache_pressure = 150
+    permissions: '0644'
+  # Containerd configuration
+  - path: /run/scripts/containerd-config.sh
+    content: |
+      #!/bin/bash
+      apt install -y containerd.io netcat-openbsd
+      mkdir -p /etc/containerd
+      grep 'disabled_plugins' /etc/containerd/config.toml | grep cri > /dev/null && \
+      (containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/g'\
+      | tee /etc/containerd/config.toml \ && systemctl restart containerd)
+    permissions: '0750'
+  # Crictl configuration
+  - path: /etc/crictl.yaml
+    content: |
+      runtime-endpoint: unix:///run/containerd/containerd.sock
+      image-endpoint: unix:///run/containerd/containerd.sock
+      timeout: 10
+      debug: false
+    permissions: '0644'
+  - path: /run/scripts/kube-install.sh
+    content: |
+      #!/bin/bash
+      KUBEVERSION="${ k8s_version.major }.${ k8s_version.minor }.${ k8s_version.patch }"
+      KUBEVERSIONFULL="$${KUBEVERSION}-${ k8s_version.build }"
+      # Be aware that order does matter:
+      for kubepkg in kubectl kubelet kubeadm
+      do
+        (dpkg -l $${kubepkg} | grep "^ii" >/dev/null) || (apt-get install -y $${kubepkg}=$${KUBEVERSIONFULL} && apt-mark hold $${kubepkg})
+      done
+    permissions: '0750'
+  - path: /run/scripts/kubeadm.sh
+    content: |
+      #!/bin/bash
+      # Usage: kubeadm.sh <node_type> <is_initial_node> <tainted> {certificate_key}
+      node_type=$1
+      is_initial_node=$2
+      tainted=$3
+      certificate_key=$4
+      KUBEVERSION="${ k8s_version.major }.${ k8s_version.minor }.${ k8s_version.patch }"
+      KUBEVERSIONFULL="$${KUBEVERSION}-${ k8s_version.build }"
+      export KUBECONFIG=/etc/kubernetes/admin.conf
+      TOKEN="${ bootstrap_token }"
+      CP_LIST="${ cp_list }"
+      ADV_ADDR="${ apiserver_advertise_address }"
+      TCPPORT="${ apiserver_bind_port }"
+      POD_CIDR="${ pod_network_cidr }"
+      SELECTED=""
+      PAUSE=30
+      if [ "$${node_type}" = "cp" ]; then
+        # we will check nodes in CP_LIST nodes first
+        if [ "$${is_initial_node}" = "true" ]; then
+          echo "`date` Control plane node `hostname` is the initial node of cluster."
+          echo "`date` We are either reinstalling this node or creating the cluster for the first time."
+          PAUSE=0
+        fi
+        for i in $(seq 1 5)
+        do
+          for cp in $${CP_LIST}
+          do
+            sleep $${PAUSE}
+            echo "`date` Checking if control plane node $${cp} is ready..."
+            if nc -zv $${cp} $${TCPPORT} >/dev/null 2>&1; then
+              echo "`date` Control plane node $${cp} is ready."
+              SELECTED=$${cp}
+              break
+            else
+              echo "`date` Control plane node $${cp} is not ready."
+            fi
+          done
+          if [ -n "$${SELECTED}" ]; then
+            break
+          fi
+        done
+        if [ -z "$${SELECTED}" ]; then
+          echo "`date` There are no control plane nodes ready."
+          if [ "$${is_initial_node}" = "true" ]; then
+            echo "`date` This is the initial control plane node, proceeding with kubeadm init."
+            kubeadm init --kubernetes-version $${KUBEVERSION} \
+              --token-ttl 0 --token $${TOKEN} \
+              --apiserver-advertise-address=`hostname -i` --control-plane-endpoint \
+              `hostname -s`:$${TCPPORT} --cri-socket=unix:///var/run/containerd/containerd.sock \
+              --pod-network-cidr $${POD_CIDR} --upload-certs
+            if [ $? -ne 0 ]; then
+              echo "`date` kubeadm init failed. Check the logs for details."
+              exit 1
+            else
+              if [ "$${tainted}" = "false" ]; then
+                sleep 10
+                echo "`date` Removing taint from the control plane node `hostname`..."
+                kubectl taint node `hostname` \
+                  node-role.kubernetes.io/control-plane:NoSchedule-
+              fi
+            fi
+          else
+            echo "`date` Check your control plane nodes and try again."
+            echo "`date` If this is a new cluster, ensure at least one control plane node is ready."
+            echo "`date` Exiting..."
+            exit 1
+          fi
+        else
+          echo "`date` Joining control plane node `hostname` to the cluster at $${SELECTED}:$${TCPPORT}..."
+          kubeadm join $${SELECTED}:$${TCPPORT} --token $${TOKEN} \
+            --discovery-token-unsafe-skip-ca-verification \
+            --control-plane --certificate-key $${certificate_key}
+          if [ $? -ne 0 ]; then
+            echo "`date` kubeadm join failed. Check the logs for details."
+            exit 1
+          else
+            if [ "$${tainted}" = "false" ]; then
+              sleep 10
+              echo "`date` Removing taint from the control plane node `hostname`..."
+              kubectl taint node `hostname` \
+                node-role.kubernetes.io/control-plane:NoSchedule-
+            fi
+          fi
+        fi
+      else
+        # Worker node
+        sleep $${PAUSE}
+        echo "`date` Worker node `hostname` is joining the cluster:"
+        kubeadm join $${ADV_ADDR}:$${TCPPORT} --token $${TOKEN} \
+          --discovery-token-unsafe-skip-ca-verification
+      fi
+    permissions: '0750'
+%{~ if node_type == "cp" }
+  - path: /run/scripts/cni-install.sh
+    content: |
+      #!/bin/bash
+      # CNI plugin installation script
+      export KUBECONFIG=/etc/kubernetes/admin.conf
+      POD_CIDR="${ networking.pod_cidr }"
+%{~ if networking.plugin == "calico" }
+      CALICO_VERSION="${ networking.version.major }.${ networking.version.minor }.${ networking.version.patch }"
+      echo "`date` Installing Calico CNI plugin..."
+      echo "`date` - Checking for Calico CRDs..."
+      kubectl get crd/apiservers.operator.tigera.io > /dev/null 2>&1 || \
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v$${CALICO_VERSION}/manifests/operator-crds.yaml
+      echo "`date` - Checking for Calico operator namespace..."
+      kubectl get ns/tigera-operator > /dev/null 2>&1 || \
+        kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v$${CALICO_VERSION}/manifests/tigera-operator.yaml
+      echo "`date` - Checking custom resources..."
+      kubectl get installation.operator.tigera.io/default > /dev/null 2>&1 || \
+        wget -O - https://raw.githubusercontent.com/projectcalico/calico/v$${CALICO_VERSION}/manifests/custom-resources.yaml \
+        | sed "s#cidr: 192.168.0.0/16#cidr: $${POD_CIDR}#" | kubectl apply -f -
+      echo "`date` Installing calicoctl utility..."
+      curl -L https://github.com/projectcalico/calico/releases/download/v$${CALICO_VERSION}/calicoctl-linux-amd64 -o /usr/local/bin/calicoctl
+      chmod +x /usr/local/bin/calicoctl
+%{~ endif }
+%{~ endif }
+runcmd:
+  - systemctl --now enable qemu-guest-agent
+  - sh /run/scripts/hosts-entries.sh
+  - sh /run/scripts/load-kernel-modules.sh
+  - sh /run/scripts/containerd-config.sh
+  - sh /run/scripts/kube-install.sh > /tmp/kube-install.log 2>&1
+  - sysctl --system
+  - sh /run/scripts/kubeadm.sh ${ node_type } ${ is_initial_node } ${tainted} ${certificate_key} > /tmp/kubeadm.log 2>&1
+%{~ if node_type == "cp" }
+  - sh /run/scripts/cni-install.sh > /tmp/cni-install.log 2>&1
+%{~ endif }
+  - echo "done" > /tmp/cloud-config.done
