@@ -29,6 +29,7 @@ No modules.
 | <a name="input_datastore_id"></a> [datastore\_id](#input\_datastore\_id) | The ID of the datastore where the file will be stored. | `string` | `"local"` | no |
 | <a name="input_file_name"></a> [file\_name](#input\_file\_name) | The name of the file to be downloaded. | `string` | n/a | yes |
 | <a name="input_node_name"></a> [node\_name](#input\_node\_name) | The name of the Proxmox node where the file will be downloaded. | `string` | n/a | yes |
+| <a name="input_overwrite"></a> [overwrite](#input\_overwrite) | Whether to overwrite the file if different from source. | `bool` | `false` | no |
 | <a name="input_url"></a> [url](#input\_url) | The URL of the file to be downloaded. | `string` | n/a | yes |
 
 ## Outputs
