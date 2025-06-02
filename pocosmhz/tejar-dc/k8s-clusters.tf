@@ -6,6 +6,7 @@ module "k8s_clusters" {
   comment                     = each.value.comment
   apiserver_advertise_address = each.value.apiserver_advertise_address
   apiserver_bind_port         = each.value.apiserver_bind_port
+  external_url                = each.value.external_url
   k8s_version                 = each.value.k8s_version
   networking                  = each.value.networking
   timezone                    = each.value.timezone
