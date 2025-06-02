@@ -42,6 +42,7 @@ packages:
   - apt-transport-https
   - ca-certificates
   - curl
+  - jq
 write_files:
   # Add entries to /etc/hosts
   - path: /run/scripts/hosts-entries.sh
@@ -219,6 +220,17 @@ write_files:
       chmod +x /usr/local/bin/calicoctl
 %{~ endif }
 %{~ endif }
+  - path: /run/scripts/kube-assets.sh
+    content: |
+      #!/bin/bash
+      # Create basic Kubernetes assets, like credentials, roles, and bindings.
+      export KUBECONFIG=/etc/kubernetes/admin.conf
+      echo "`date` Creating sa/terraform ..."
+      kubectl get sa/terraform > /dev/null 2>&1 || \
+        kubectl create serviceaccount terraform
+      echo "`date` Creating clusterrolebinding/terraform-binding ..."
+      kubectl get clusterrolebinding/terraform-binding > /dev/null 2>&1 || \
+        kubectl create clusterrolebinding terraform-binding --clusterrole=cluster-admin --serviceaccount=default:terraform
 runcmd:
   - systemctl --now enable qemu-guest-agent
   - sh /run/scripts/hosts-entries.sh
@@ -230,4 +242,5 @@ runcmd:
 %{~ if node_type == "cp" }
   - sh /run/scripts/cni-install.sh > /tmp/cni-install.log 2>&1
 %{~ endif }
+  - sh /run/scripts/kube-assets.sh > /tmp/kube-assets.log 2>&1
   - echo "done" > /tmp/cloud-config.done

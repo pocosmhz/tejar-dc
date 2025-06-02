@@ -28,8 +28,8 @@ variable "k8s_version" {
 variable "networking" {
   description = "Networking configuration for the Kubernetes cluster"
   type = object({
-    plugin   = string
-    version  = object({
+    plugin = string
+    version = object({
       major = number
       minor = number
       patch = number
@@ -166,7 +166,7 @@ variable "admin_users" {
 variable "bootstrap_token" {
   description = "Bootstrap token for the Kubernetes cluster"
   type        = string
-  sensitive = true
+  sensitive   = true
 }
 
 variable "certificate_key" {

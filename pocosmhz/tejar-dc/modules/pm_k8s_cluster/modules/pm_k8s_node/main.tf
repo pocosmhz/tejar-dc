@@ -30,26 +30,26 @@ resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
   node_name    = var.pve_node
   source_raw {
     data = templatefile("${path.module}/templates/user-data-cloud-config.tftpl", {
-      need_gnupg   = true
-      timezone     = var.timezone
-      root_ssh_key = tls_private_key.pk.public_key_openssh
-      admin_users  = var.admin_users
-      k8s_version  = var.k8s_version
-      networking   = var.networking
-      os_flavor  = var.os_flavor
-      os_version = var.os_version
-      hosts_entries = var.hosts_entries
-      cp_list = join(" ", [for he in var.hosts_entries : he.hostname if he.node_type == "cp"])
-      k8s_gpg_key = data.http.k8s_gpg_key.response_body
-      docker_gpg_key = data.http.docker_gpg_key.response_body
-      node_type = var.node_type
-      bootstrap_token = var.bootstrap_token
-      tainted = var.tainted
+      need_gnupg                  = true
+      timezone                    = var.timezone
+      root_ssh_key                = tls_private_key.pk.public_key_openssh
+      admin_users                 = var.admin_users
+      k8s_version                 = var.k8s_version
+      networking                  = var.networking
+      os_flavor                   = var.os_flavor
+      os_version                  = var.os_version
+      hosts_entries               = var.hosts_entries
+      cp_list                     = join(" ", [for he in var.hosts_entries : he.hostname if he.node_type == "cp"])
+      k8s_gpg_key                 = data.http.k8s_gpg_key.response_body
+      docker_gpg_key              = data.http.docker_gpg_key.response_body
+      node_type                   = var.node_type
+      bootstrap_token             = var.bootstrap_token
+      tainted                     = var.tainted
       apiserver_advertise_address = var.apiserver_advertise_address
-      is_initial_node = (split("/", var.ip_address)[0] == var.apiserver_advertise_address)
-      apiserver_bind_port = var.apiserver_bind_port
-      pod_network_cidr = var.networking.pod_cidr
-      certificate_key = (var.certificate_key != null ? var.certificate_key : "")
+      is_initial_node             = (split("/", var.ip_address)[0] == var.apiserver_advertise_address)
+      apiserver_bind_port         = var.apiserver_bind_port
+      pod_network_cidr            = var.networking.pod_cidr
+      certificate_key             = (var.certificate_key != null ? var.certificate_key : "")
     })
     file_name = "${var.hostname}-user-data-cloud-config.yaml"
   }
