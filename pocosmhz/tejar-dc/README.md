@@ -78,3 +78,9 @@ The Kubernetes clusters orchestrated here implement the following base features:
 - Kubernetes version of choice. Vanilla Kubernetes installation.
 - External URL for managing Kubernetes from outside home lab.
 - CNI plugin of choice. Currently, only latest version of Calico is available.
+
+We get the Kubernetes credentials through SSH. And in order to get to the Kubernetes nodes, we need to know the SSH credentials generated for each node.
+
+Classic [chicken and egg problem](https://en.wikipedia.org/wiki/Chicken_or_the_egg).
+
+We've solved this by using an intermediate module called `pm_k8s_cluster_get_access`. The jump host will depend on cluster hosts to be ready, but **no cluster node will depend on the jump host** to be created or modified.
