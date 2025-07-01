@@ -1,6 +1,35 @@
 # Tejar DC
 This part of the IaC tree takes care only about infrastructure. That is, VMs, HA elements, raw storage and such.
 
+## Provisioning Proxmox assets
+In order to use the [Proxmox provider](https://registry.terraform.io/providers/bpg/proxmox) for Terraform, we need a set of credentials.
+
+Instead of using the default superuser account, we're going to create a `terraform` account and use it for all purposes here.
+
+1. Log in to one of the Proxmox cluster nodes and create a new role:
+    ```Shell
+    # pveum role add TerraformProv -privs "Datastore.Allocate Datastore.AllocateSpace Datastore.AllocateTemplate Datastore.Audit Pool.Allocate Sys.Audit Sys.Console Sys.Modify VM.Allocate VM.Audit VM.Clone VM.Config.CDROM VM.Config.Cloudinit VM.Config.CPU VM.Config.Disk VM.Config.HWType VM.Config.Memory VM.Config.Network VM.Config.Options VM.Migrate VM.Monitor VM.PowerMgmt SDN.Use"
+    ```
+2. Now create a new user, assign a password and the role we've created:
+    ```Shell
+    # pveum user add terraform-prov@pve --password XX12345YY
+    # pveum aclmod / -user terraform-prov@pve -role TerraformProv
+    ```
+
+However, that does not work well with SSH for the time being.
+
+You can either use `root` credentials or do the following (not completely tested, you're on your own):
+
+1. Create a UNIX user on all Proxmox nodes.
+2. Assign a password
+3. Create a PAM user with the same name, through `pveum` and assign it
+4. Create a UNIX user group and add the new user to that group.
+5. Install `sudo` and provide appropriate permissions.
+
+You might get more information from [this Reddit post](https://www.reddit.com/r/Proxmox/comments/16nwvgh/what_is_the_proper_way_to_create_a_new_proxmox/).
+
+From here on, YMMV. Please let me know if you succeed.
+
 ## Jump host
 As this is intended for a domestic lab, only one public IP address is needed for all the tasks.
 
