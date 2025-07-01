@@ -3,14 +3,14 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1, < 1.11.4 |
-| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.78.0 |
+| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.78.2 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | 4.1.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 0.78.0 |
+| <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 0.78.2 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | 4.1.0 |
 
 ## Modules
@@ -21,10 +21,10 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [proxmox_virtual_environment_file.meta_data_cloud_config](https://registry.terraform.io/providers/bpg/proxmox/0.78.0/docs/resources/virtual_environment_file) | resource |
-| [proxmox_virtual_environment_file.user_data_cloud_config](https://registry.terraform.io/providers/bpg/proxmox/0.78.0/docs/resources/virtual_environment_file) | resource |
-| [proxmox_virtual_environment_haresource.hares](https://registry.terraform.io/providers/bpg/proxmox/0.78.0/docs/resources/virtual_environment_haresource) | resource |
-| [proxmox_virtual_environment_vm.vm](https://registry.terraform.io/providers/bpg/proxmox/0.78.0/docs/resources/virtual_environment_vm) | resource |
+| [proxmox_virtual_environment_file.meta_data_cloud_config](https://registry.terraform.io/providers/bpg/proxmox/0.78.2/docs/resources/virtual_environment_file) | resource |
+| [proxmox_virtual_environment_file.user_data_cloud_config](https://registry.terraform.io/providers/bpg/proxmox/0.78.2/docs/resources/virtual_environment_file) | resource |
+| [proxmox_virtual_environment_haresource.hares](https://registry.terraform.io/providers/bpg/proxmox/0.78.2/docs/resources/virtual_environment_haresource) | resource |
+| [proxmox_virtual_environment_vm.vm](https://registry.terraform.io/providers/bpg/proxmox/0.78.2/docs/resources/virtual_environment_vm) | resource |
 | [tls_private_key.pk](https://registry.terraform.io/providers/hashicorp/tls/4.1.0/docs/resources/private_key) | resource |
 
 ## Inputs
@@ -47,7 +47,7 @@ No modules.
 | <a name="input_node_id"></a> [node\_id](#input\_node\_id) | Proxmox node ID where the VM will be created | `string` | n/a | yes |
 | <a name="input_os_type"></a> [os\_type](#input\_os\_type) | Operating system type | `string` | `"l26"` | no |
 | <a name="input_snippets_datastore_id"></a> [snippets\_datastore\_id](#input\_snippets\_datastore\_id) | ID of the datastore where the snippets will be stored | `string` | `"local"` | no |
-| <a name="input_sshpiper_version"></a> [sshpiper\_version](#input\_sshpiper\_version) | Version of SSHPiper to be used | `string` | `"1.4.8"` | no |
+| <a name="input_sshpiper_version"></a> [sshpiper\_version](#input\_sshpiper\_version) | Version of SSHPiper to be used | `string` | `"1.5.0"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags for the VM | `list(string)` | `[]` | no |
 | <a name="input_timezone"></a> [timezone](#input\_timezone) | Timezone for the VM | `string` | `"UTC"` | no |
 

@@ -3,7 +3,7 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1, < 1.11.4 |
-| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.78.0 |
+| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.78.2 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | 3.5.1 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | 4.1.0 |
 
