@@ -11,7 +11,6 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_external"></a> [external](#provider\_external) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | 3.5.1 |
 
 ## Modules
@@ -26,7 +25,6 @@
 |------|------|
 | [random_string.bootstrap_token_id](https://registry.terraform.io/providers/hashicorp/random/3.5.1/docs/resources/string) | resource |
 | [random_string.bootstrap_token_secret](https://registry.terraform.io/providers/hashicorp/random/3.5.1/docs/resources/string) | resource |
-| [external_external.cluster_data](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
 
 ## Inputs
 
@@ -57,8 +55,6 @@
 |------|-------------|
 | <a name="output_apiserver_advertise_address"></a> [apiserver\_advertise\_address](#output\_apiserver\_advertise\_address) | The API server advertise address for the Kubernetes cluster. |
 | <a name="output_apiserver_bind_port"></a> [apiserver\_bind\_port](#output\_apiserver\_bind\_port) | The API server bind port for the Kubernetes cluster. |
-| <a name="output_cluster_ca_cert"></a> [cluster\_ca\_cert](#output\_cluster\_ca\_cert) | The CA certificate for the Kubernetes cluster. |
 | <a name="output_external_url"></a> [external\_url](#output\_external\_url) | The external URL for the Kubernetes cluster. |
 | <a name="output_hosts"></a> [hosts](#output\_hosts) | The list of hosts in the Kubernetes cluster. |
 | <a name="output_k8s_version"></a> [k8s\_version](#output\_k8s\_version) | The Kubernetes version for the cluster. |
-| <a name="output_terraform_token"></a> [terraform\_token](#output\_terraform\_token) | The Terraform token for the Kubernetes cluster. |

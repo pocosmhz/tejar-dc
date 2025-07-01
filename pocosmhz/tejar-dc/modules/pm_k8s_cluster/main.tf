@@ -57,18 +57,3 @@ module "pm_k8s_node" {
   memory     = each.value.memory
   disk_size  = each.value.disk_size
 }
-
-data "external" "cluster_data" {
-  program = ["ssh",
-    "-p ${local.ssh_access.port}",
-    "-o", "UpdateHostKeys=no",
-    "-o", "StrictHostKeyChecking=no",
-    "root.${local.ssh_access.hostname}@${local.ssh_access.fqdn}", <<EOF
-  export KUBECONFIG=/etc/kubernetes/admin.conf
-  token=$(kubectl create token terraform --duration=87600h 2> /dev/null)
-  ca_cert=$(cat /etc/kubernetes/pki/ca.crt 2> /dev/null)
-  jq -n --arg ca_cert "$ca_cert" --arg token "$token" '{"token": $token, "ca_cert":$ca_cert}'
-  EOF
-  ]
-  depends_on = [module.pm_k8s_node]
-}

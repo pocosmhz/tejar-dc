@@ -10,7 +10,7 @@ terraform {
       version = "4.1.0"
     }
     external = {
-      source  = "hashicorp/external"
+      source  = "opentofu/external"
       version = "2.3.5"
     }
   }
