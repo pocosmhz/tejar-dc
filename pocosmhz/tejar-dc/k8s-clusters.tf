@@ -13,7 +13,7 @@ module "k8s_clusters" {
   nodes                       = each.value.nodes
   disks_datastore_id          = var.proxmox_datastore.disks_datastore.id
   tags                        = each.value.tags
-  image_list                  = module.pm_ve_vm_debian_cloud_image
+  image_list                  = module.pm_ve_vm_debian12_cloud_image
   admin_users                 = var.admin_users
   network_bridge              = var.proxmox_network.bridge.id
   ha_groups                   = { for k, v in proxmox_virtual_environment_hagroup.pm_ve_hagroups : k => v }

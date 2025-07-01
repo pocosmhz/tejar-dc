@@ -60,8 +60,8 @@ variable "proxmox_vm_default_images" {
     file_name = string
   }))
   default = {
-    debian = {
-      url       = "https://cloud.debian.org/images/cloud/bookworm/20250528-2126/debian-12-genericcloud-amd64-20250528-2126.qcow2"
+    debian12 = {
+      url       = "https://cloud.debian.org/images/cloud/bookworm/20250530-2128/debian-12-genericcloud-amd64-20250530-2128.qcow2"
       file_name = "debian-12-genericcloud-amd64.img"
     }
   }
