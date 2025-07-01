@@ -4,4 +4,5 @@ resource "proxmox_virtual_environment_download_file" "image" {
   node_name    = var.node_name
   url          = var.url
   file_name    = var.file_name
+  overwrite    = var.overwrite
 }

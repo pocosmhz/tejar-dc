@@ -60,8 +60,8 @@ variable "proxmox_vm_default_images" {
     file_name = string
   }))
   default = {
-    debian = {
-      url       = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
+    debian12 = {
+      url       = "https://cloud.debian.org/images/cloud/bookworm/20250530-2128/debian-12-genericcloud-amd64-20250530-2128.qcow2"
       file_name = "debian-12-genericcloud-amd64.img"
     }
   }
@@ -185,6 +185,7 @@ variable "proxmox_k8s_clusters" {
     comment                     = string
     apiserver_advertise_address = string
     apiserver_bind_port         = number
+    external_url                = optional(string, null)
     k8s_version = object({
       major = number
       minor = number
@@ -238,6 +239,10 @@ variable "proxmox_k8s_clusters" {
       os_flavor_override  = optional(string, "debian")
       os_version_override = optional(string, "bookworm")
       certificate_key     = optional(string, "")
+      ssh_access = optional(object({
+        fqdn = string
+        port = number
+      }), null)
     }))
     tags     = list(string)
     timezone = optional(string, "UTC")
@@ -274,6 +279,10 @@ variable "proxmox_k8s_clusters" {
           cpu_cores  = 2
           memory     = 4096
           disk_size  = 20
+          ssh_access = {
+            fqdn = "your-k8s-cp-hostname.example.com"
+            port = 22
+          }
         }
         k8s01w01 = {
           ip_address = "192.168.1.6/24"

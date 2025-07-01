@@ -3,6 +3,7 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1, < 1.11.4 |
+| <a name="requirement_external"></a> [external](#requirement\_external) | 2.3.5 |
 | <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.78.0 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | 4.1.0 |
 
@@ -52,7 +53,7 @@ No modules.
 | <a name="input_k8s_version"></a> [k8s\_version](#input\_k8s\_version) | Kubernetes version | <pre>object({<br/>    major = number<br/>    minor = number<br/>    patch = number<br/>    build = optional(string, "1.1")<br/>  })</pre> | n/a | yes |
 | <a name="input_memory"></a> [memory](#input\_memory) | Memory size for the VM in MB | `number` | `2048` | no |
 | <a name="input_network_bridge"></a> [network\_bridge](#input\_network\_bridge) | Network bridge to be used | `string` | `"vmbr0"` | no |
-| <a name="input_networking"></a> [networking](#input\_networking) | Networking configuration for the Kubernetes cluster | <pre>object({<br/>    plugin   = string<br/>    version  = object({<br/>      major = number<br/>      minor = number<br/>      patch = number<br/>    })<br/>    pod_cidr = string<br/>  })</pre> | n/a | yes |
+| <a name="input_networking"></a> [networking](#input\_networking) | Networking configuration for the Kubernetes cluster | <pre>object({<br/>    plugin = string<br/>    version = object({<br/>      major = number<br/>      minor = number<br/>      patch = number<br/>    })<br/>    pod_cidr = string<br/>  })</pre> | n/a | yes |
 | <a name="input_node_type"></a> [node\_type](#input\_node\_type) | Type of the node (cp or worker) | `string` | n/a | yes |
 | <a name="input_os_flavor"></a> [os\_flavor](#input\_os\_flavor) | OS flavor for the VM | `string` | `"debian"` | no |
 | <a name="input_os_type"></a> [os\_type](#input\_os\_type) | Operating system type | `string` | `"l26"` | no |

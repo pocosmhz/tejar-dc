@@ -21,3 +21,8 @@ variable "file_name" {
   description = "The name of the file to be downloaded."
   type        = string
 }
+variable "overwrite" {
+  description = "Whether to overwrite the file if different from source."
+  type        = bool
+  default     = false
+}

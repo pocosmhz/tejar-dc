@@ -1,7 +1,11 @@
 # Kubernetes cluster
-# TODO:
-# 1. generate token for all nodes
-# 2. pass all variables to the module below to create every node.
+locals {
+  ssh_access = [for k, v in var.nodes : {
+    hostname = k
+    fqdn     = v.ssh_access.fqdn
+    port     = v.ssh_access.port
+  } if split("/", v.ip_address)[0] == var.apiserver_advertise_address][0]
+}
 
 resource "random_string" "bootstrap_token_id" {
   length  = 6

@@ -20,6 +20,12 @@ variable "apiserver_bind_port" {
   default     = 6443
 }
 
+variable "external_url" {
+  description = "External URL for the Kubernetes cluster"
+  type        = string
+  default     = null
+}
+
 variable "timezone" {
   description = "Timezone for the Kubernetes cluster"
   type        = string
@@ -96,6 +102,10 @@ variable "nodes" {
     os_flavor_override  = optional(string, "debian")
     os_version_override = optional(string, "bookworm")
     certificate_key     = optional(string, null)
+    ssh_access = optional(object({
+      fqdn = string
+      port = number
+    }), null)
   }))
 }
 

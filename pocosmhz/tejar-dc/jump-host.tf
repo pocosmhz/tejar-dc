@@ -9,7 +9,7 @@ module "pm_jump_host" {
   disk_size          = 3 # 3 GB is the minimum size for cloud images
   memory             = 384
   network_bridge     = var.proxmox_network.bridge.id
-  image_id           = module.pm_ve_vm_debian_cloud_image[var.proxmox_jump_host.node].id
+  image_id           = module.pm_ve_vm_debian12_cloud_image[var.proxmox_jump_host.node].id
   timezone           = var.proxmox_timezone
   admin_users        = var.admin_users
   hosts = flatten(

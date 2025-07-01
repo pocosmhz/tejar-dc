@@ -12,8 +12,20 @@ output "hosts" {
   sensitive = true
 }
 
-output "bootstrap_token" {
-  description = "The bootstrap token for the Kubernetes cluster."
-  value       = "${random_string.bootstrap_token_id.result}.${random_string.bootstrap_token_secret.result}"
-  sensitive   = true
+output "apiserver_advertise_address" {
+  description = "The API server advertise address for the Kubernetes cluster."
+  value       = var.apiserver_advertise_address
+}
+
+output "apiserver_bind_port" {
+  description = "The API server bind port for the Kubernetes cluster."
+  value       = var.apiserver_bind_port
+}
+output "external_url" {
+  description = "The external URL for the Kubernetes cluster."
+  value       = var.external_url
+}
+output "k8s_version" {
+  description = "The Kubernetes version for the cluster."
+  value       = var.k8s_version
 }
