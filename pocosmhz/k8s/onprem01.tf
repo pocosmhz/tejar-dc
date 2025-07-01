@@ -1,11 +1,19 @@
-resource "kubernetes_namespace" "tejar_dc" {
+resource "kubernetes_namespace" "testns" {
   metadata {
-    name = "tejar-dc"
+    name = "testns"
   }
 }
 
-resource "kubernetes_namespace" "tejar_dc2" {
-  metadata {
-    name = "tejar-dc2"
-  }
+
+resource "helm_release" "metrics_server" {
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server"
+  chart      = "metrics-server"
+  version    = "3.12.2"
+  set = [
+    {
+      name  = "args[0]"
+      value = "--kubelet-insecure-tls"
+    }
+  ]
 }
