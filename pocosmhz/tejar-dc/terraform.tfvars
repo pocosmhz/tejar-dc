@@ -1,7 +1,7 @@
 # Proxmox default values
 proxmox_vm_default_images = {
   debian12 = {
-    url       = "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-genericcloud-amd64.qcow2"
+    url       = "https://cloud.debian.org/images/cloud/bookworm/20250703-2162/debian-12-genericcloud-amd64-20250703-2162.qcow2"
     file_name = "debian-12-genericcloud-amd64.img"
   }
   debian13 = {
