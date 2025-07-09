@@ -12,6 +12,14 @@ variable "k8s_clusters" {
       cluster_fsid = string
       rbd_pool     = string
     })
+    kube_vip = object({
+      address   = string
+      interface = string
+    })
+    nginx = optional(object({
+      load_balancer_class = optional(string, "")
+      load_balancer_ip    = optional(string, "")
+    }))
   }))
   default = {
     k8s01 = {
@@ -25,6 +33,15 @@ variable "k8s_clusters" {
           ip_gateway = "192.168.1.1"
         }
       }
+      kube_vip = {
+        address   = "192.168.1.100"
+        interface = "eth0"
+      }
+      nginx = {
+        load_balancer_class = "kube-vip.io/kube-vip-class"
+        load_balancer_ip    = "192.168.1.100"
+      }
+      
       ceph = {
         # we omit the client. prefix !
         username = "kubernetes"
