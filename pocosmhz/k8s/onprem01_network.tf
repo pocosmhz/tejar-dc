@@ -2,15 +2,19 @@
 # 1. kube-vip
 # 2. Nginx Ingress Controller
 # 3. External DNS
-# 4. cert-manager
+
+resource "kubernetes_namespace" "kube_vip_system" {
+  metadata {
+    name = "kube-vip-system"
+  }
+}
 
 resource "helm_release" "kube_vip" {
   name       = "kube-vip"
   repository = "https://kube-vip.github.io/helm-charts"
   chart      = "kube-vip"
   version    = "0.6.6"
-  create_namespace = true
-  namespace  = "kube-vip-system"
+  namespace  = kubernetes_namespace.kube_vip_system.id
   values = [
     templatefile("${path.module}/source/helm/kube-vip/kube-vip-values.tpl.yml", {
       kube_vip = var.k8s_clusters["onprem01"].kube_vip
@@ -18,13 +22,18 @@ resource "helm_release" "kube_vip" {
   ]
 }
 
+resource "kubernetes_namespace" "ingress_nginx" {
+  metadata {
+    name = "ingress-nginx"
+  }
+}
+
 resource "helm_release" "ingress_nginx" {
-  name             = "ingress-nginx"
-  chart            = "ingress-nginx"
-  repository       = "https://kubernetes.github.io/ingress-nginx"
-  namespace        = "ingress-nginx"
-  create_namespace = true
-  version          = "4.13.0" 
+  name       = "ingress-nginx"
+  chart      = "ingress-nginx"
+  repository = "https://kubernetes.github.io/ingress-nginx"
+  namespace  = kubernetes_namespace.ingress_nginx.id
+  version    = "4.13.0"
   values = [
     templatefile("${path.module}/source/helm/nginx/nginx-ingress-values.tpl.yml", {
       nginx_conf = var.k8s_clusters["onprem01"].nginx
