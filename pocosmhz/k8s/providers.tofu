@@ -9,6 +9,10 @@ terraform {
       source  = "opentofu/helm"
       version = "3.0.2"
     }
+    http = {
+      source  = "opentofu/http"
+      version = "3.5.0"
+    }
   }
 }
 
