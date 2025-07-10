@@ -41,7 +41,6 @@ variable "k8s_clusters" {
         load_balancer_class = "kube-vip.io/kube-vip-class"
         load_balancer_ip    = "192.168.1.100"
       }
-      
       ceph = {
         # we omit the client. prefix !
         username = "kubernetes"
