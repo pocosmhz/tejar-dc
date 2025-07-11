@@ -39,3 +39,32 @@ resource "helm_release" "cert_manager" {
   ]
   depends_on = [kubernetes_manifest.cert_manager_crds]
 }
+
+resource "kubernetes_manifest" "cluster_issuer_letsencrypt" {
+  manifest = {
+    apiVersion = "cert-manager.io/v1"
+    kind       = "ClusterIssuer"
+    metadata = {
+      name = "letsencrypt"
+    }
+    spec = {
+      acme = {
+        server = var.k8s_clusters["onprem01"].cert_manager.acme.server
+        email  = var.k8s_clusters["onprem01"].cert_manager.acme.email
+        privateKeySecretRef = {
+          name = "letsencrypt-account-key"
+        }
+        solvers = [
+          {
+            http01 = {
+              ingress = {
+                class = var.k8s_clusters["onprem01"].cert_manager.ingress_class
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+  depends_on = [helm_release.cert_manager]
+}
