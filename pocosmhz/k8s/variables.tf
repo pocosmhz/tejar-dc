@@ -27,6 +27,14 @@ variable "k8s_clusters" {
       })
       ingress_class = optional(string, "nginx")
     }))
+    gitea = optional(object({
+      load_balancer_class = optional(string, "kube-vip.io/kube-vip-class")
+      load_balancer_ip    = optional(string, "")
+      domain              = optional(string, "gitea.example.com")
+      admin_password      = optional(string, "")
+      pg_password         = optional(string, "pg_password")
+      pg_resource_preset  = optional(string, "micro")
+    }))
   }))
   default = {
     k8s01 = {
@@ -65,6 +73,14 @@ variable "k8s_clusters" {
           server = "https://acme-v02.api.letsencrypt.org/directory"
         }
         ingress_class = "nginx"
+      }
+      gitea = {
+        load_balancer_class = "kube-vip.io/kube-vip-class"
+        load_balancer_ip    = "192.168.1.100"
+        domain              = "gitea.example.com"
+        admin_password      = "r8sA8CPHD9!bt6d"
+        pg_password         = "pg_password"
+        pg_resource_preset  = "micro"
       }
     }
   }
