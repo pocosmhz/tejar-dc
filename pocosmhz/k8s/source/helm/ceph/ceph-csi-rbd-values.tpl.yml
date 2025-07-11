@@ -27,7 +27,7 @@ csiConfig:
       - "${ mon }"
 %{~ endfor }
     rbd:
-      netNamespaceFilePath: "{{ .kubeletDir }}/plugins/{{ .driverName }}/net"
+      # netNamespaceFilePath: "{{ .kubeletDir }}/plugins/{{ .driverName }}/net"
       mirrorDaemonCount: 1
     readAffinity:
       enabled: true
