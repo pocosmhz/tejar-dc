@@ -24,6 +24,7 @@ variable "k8s_clusters" {
       interface = string
     })
     nginx = optional(object({
+      kind                = optional(string, "Deployment", )
       load_balancer_class = optional(string, "")
       load_balancer_ip    = optional(string, "")
     }))
@@ -51,6 +52,7 @@ variable "k8s_clusters" {
       load_balancer_ip    = optional(string, "")
       domain              = optional(string, "gitea.k8s.example.com")
       admin_password      = optional(string, "")
+      postgresql_ha       = optional(bool, false)
       pg_password         = optional(string, "pg_password")
       pg_resource_preset  = optional(string, "micro")
     }))
@@ -90,6 +92,7 @@ variable "k8s_clusters" {
         interface = "eth0"
       }
       nginx = {
+        kind                = "Deployment"
         load_balancer_class = "kube-vip.io/kube-vip-class"
         load_balancer_ip    = "192.168.1.100"
       }
@@ -117,6 +120,7 @@ variable "k8s_clusters" {
         load_balancer_ip    = "192.168.1.100"
         domain              = "gitea.example.com"
         admin_password      = "r8sA8CPHD9!bt6d"
+        postgresql_ha       = false
         pg_password         = "pg_password"
         pg_resource_preset  = "micro"
       }

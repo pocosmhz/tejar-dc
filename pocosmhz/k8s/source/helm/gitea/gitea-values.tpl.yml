@@ -572,7 +572,7 @@ postgresql-ha:
       database: gitea
       password: ${ gitea_conf.pg_password }
       username: gitea
-  enabled: true
+  enabled: ${ gitea_conf.postgresql_ha }
   postgresql:
     repmgrPassword: ${ gitea_conf.pg_password }
     postgresPassword: ${ gitea_conf.pg_password }
@@ -600,17 +600,18 @@ postgresql-ha:
 ## @param postgresql.global.postgresql.service.ports.postgresql PostgreSQL service port (overrides `service.ports.postgresql`)
 ## @param postgresql.primary.persistence.size PVC Storage Request for PostgreSQL volume
 postgresql:
-  enabled: false
+  enabled: ${ ! gitea_conf.postgresql_ha }
   global:
     postgresql:
       auth:
-        password: gitea
+        password: ${ gitea_conf.pg_password }
         database: gitea
         username: gitea
       service:
         ports:
           postgresql: 5432
   primary:
+    resourcesPreset: "${ gitea_conf.pg_resource_preset }"
     persistence:
       size: 10Gi
 

@@ -225,7 +225,7 @@ controller:
   #         name: secret-resource
 
   # -- Use a `DaemonSet` or `Deployment`
-  kind: Deployment
+  kind: ${ nginx_conf.kind }
   # -- Annotations to be added to the controller Deployment or DaemonSet
   ##
   annotations: {}
@@ -405,12 +405,12 @@ controller:
       memory: 90Mi
   # Mutually exclusive with keda autoscaling
   autoscaling:
-    enabled: true
+    enabled: false
     annotations: {}
     minReplicas: 1
     maxReplicas: 8
     targetCPUUtilizationPercentage: 80
-    targetMemoryUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 75
     behavior: {}
     # scaleDown:
     #   stabilizationWindowSeconds: 300
