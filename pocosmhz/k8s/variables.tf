@@ -1,6 +1,13 @@
 variable "k8s_clusters" {
   description = "Kubernetes clusters configuration"
   type = map(object({
+    providers = object({
+      gcp = optional(object({
+        project = string
+        region  = string
+        zone    = string
+      }))
+    })
     nodes = map(object({
       ip_address = string
       ip_gateway = string
@@ -20,6 +27,16 @@ variable "k8s_clusters" {
       load_balancer_class = optional(string, "")
       load_balancer_ip    = optional(string, "")
     }))
+    external_dns = object({
+      parent_zone = object({
+        dnsname = string
+        name    = string
+      })
+      zone = object({
+        dnsname = string
+        name    = string
+      })
+    })
     cert_manager = optional(object({
       acme = object({
         email  = string
@@ -28,9 +45,11 @@ variable "k8s_clusters" {
       ingress_class = optional(string, "nginx")
     }))
     gitea = optional(object({
+      ingress_class       = optional(string, "nginx")
+      target              = optional(string, "")
       load_balancer_class = optional(string, "kube-vip.io/kube-vip-class")
       load_balancer_ip    = optional(string, "")
-      domain              = optional(string, "gitea.example.com")
+      domain              = optional(string, "gitea.k8s.example.com")
       admin_password      = optional(string, "")
       pg_password         = optional(string, "pg_password")
       pg_resource_preset  = optional(string, "micro")
@@ -38,6 +57,13 @@ variable "k8s_clusters" {
   }))
   default = {
     k8s01 = {
+      providers = {
+        gcp = {
+          project = "my-gcp-project"
+          region  = "us-central1"
+          zone    = "us-central1-a"
+        }
+      }
       nodes = {
         k8s01cp01 = {
           ip_address = "192.168.1.5"
@@ -67,6 +93,16 @@ variable "k8s_clusters" {
         load_balancer_class = "kube-vip.io/kube-vip-class"
         load_balancer_ip    = "192.168.1.100"
       }
+      external_dns = {
+        parent_zone = {
+          dnsname = "example.com"
+          name    = "example-com"
+        }
+        zone = {
+          dnsname = "k8s.example.com"
+          name    = "k8s-example-com"
+        }
+      }
       cert_manager = {
         acme = {
           email  = "email@example.com"
@@ -75,6 +111,8 @@ variable "k8s_clusters" {
         ingress_class = "nginx"
       }
       gitea = {
+        ingress_class       = "nginx"
+        target              = "external01.example.com"
         load_balancer_class = "kube-vip.io/kube-vip-class"
         load_balancer_ip    = "192.168.1.100"
         domain              = "gitea.example.com"

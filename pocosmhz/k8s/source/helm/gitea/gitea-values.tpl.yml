@@ -164,18 +164,24 @@ service:
 ## @param ingress.hosts[0].paths[0].path Default Ingress path
 ## @param ingress.tls Ingress tls settings
 ingress:
-  enabled: false
-  className: ""
+  enabled: true
+  className: "${ gitea_conf.ingress_class }"
   pathType: Prefix
-  annotations: {}
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "${ gitea_conf.domain }"
+    external-dns.alpha.kubernetes.io/ttl: "300"
+%{ if can(gitea_conf.target) }
+    external-dns.alpha.kubernetes.io/target: "${ gitea_conf.target}"    
+%{ endif }
+    cert-manager.io/cluster-issuer: "letsencrypt"
   hosts:
     - host: "${ gitea_conf.domain }"
       paths:
         - path: /
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - git.example.com
+  tls:
+    - secretName: gitea-tls
+      hosts:
+        - ${ gitea_conf.domain }
 
 ## @section deployment
 #
