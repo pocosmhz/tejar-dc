@@ -13,6 +13,10 @@ terraform {
       source  = "opentofu/http"
       version = "3.5.0"
     }
+    google = {
+      source  = "opentofu/google"
+      version = "6.43.0"
+    }
   }
 }
 
@@ -32,4 +36,11 @@ provider "helm" {
     # cluster_ca_certificate = data.terraform_remote_state.tejar_dc.outputs.k8s_cluster_data["onprem01"].cluster_ca_cert
     # tls_server_name        = "kubernetes.default.svc"
   }
+}
+
+provider "google" {
+  project = var.k8s_clusters["onprem01"].providers.gcp.project
+  region  = var.k8s_clusters["onprem01"].providers.gcp.region
+  zone    = var.k8s_clusters["onprem01"].providers.gcp.zone
+  alias   = "onprem01"
 }
