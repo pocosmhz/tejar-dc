@@ -30,6 +30,25 @@ variable "k8s_clusters" {
       load_balancer_class     = optional(string, "")
       load_balancer_ip        = optional(string, "")
     }))
+    prometheus = object({
+      prometheus = object({
+        storage_size = string
+      })
+      grafana = object({
+        enabled = bool
+        ingress = object({
+          enabled = bool
+          class   = optional(string, "nginx")
+          domain  = optional(string, "grafana.k8s.example.com")
+          target  = optional(string, "")
+        })
+        password = string
+        persistence = object({
+          enabled      = bool
+          storage_size = string
+        })
+      })
+    })
     external_dns = object({
       parent_zone = object({
         dnsname = string
@@ -99,6 +118,25 @@ variable "k8s_clusters" {
         use_proxy_protocol      = false
         load_balancer_class     = "kube-vip.io/kube-vip-class"
         load_balancer_ip        = "192.168.1.100"
+      }
+      prometheus = {
+        prometheus = {
+          storage_size = "50Gi"
+        }
+        grafana = {
+          enabled = true
+          ingress = {
+            enabled = true
+            class   = "nginx"
+            domain  = "grafana.k8s.example.com"
+            target  = "external01.example.com"
+          }
+          password = "prom-operator"
+          persistence = {
+            enabled      = true
+            storage_size = "10Gi"
+          }
+        }
       }
       external_dns = {
         parent_zone = {

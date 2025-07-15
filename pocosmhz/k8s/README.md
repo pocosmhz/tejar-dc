@@ -18,6 +18,7 @@ A brief, non-comprehensive description, would be:
 - Kube-VIP load balancer
 - cert-manager
 - external-dns
+- Prometheus (kube-prometheus-stack)
 - Providers (see below)
 
 ## Providers
