@@ -24,9 +24,11 @@ variable "k8s_clusters" {
       interface = string
     })
     nginx = optional(object({
-      kind                = optional(string, "Deployment", )
-      load_balancer_class = optional(string, "")
-      load_balancer_ip    = optional(string, "")
+      kind                    = optional(string, "Deployment")
+      external_traffic_policy = optional(string, "Local")
+      use_proxy_protocol      = optional(bool, false)
+      load_balancer_class     = optional(string, "")
+      load_balancer_ip        = optional(string, "")
     }))
     external_dns = object({
       parent_zone = object({
@@ -92,9 +94,11 @@ variable "k8s_clusters" {
         interface = "eth0"
       }
       nginx = {
-        kind                = "Deployment"
-        load_balancer_class = "kube-vip.io/kube-vip-class"
-        load_balancer_ip    = "192.168.1.100"
+        kind                    = "Deployment"
+        external_traffic_policy = "Cluster"
+        use_proxy_protocol      = false
+        load_balancer_class     = "kube-vip.io/kube-vip-class"
+        load_balancer_ip        = "192.168.1.100"
       }
       external_dns = {
         parent_zone = {
