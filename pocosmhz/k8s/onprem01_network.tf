@@ -1,7 +1,6 @@
 # Networking components
 # 1. kube-vip
 # 2. Nginx Ingress Controller
-# 3. External DNS
 
 resource "kubernetes_namespace" "kube_vip_system" {
   metadata {

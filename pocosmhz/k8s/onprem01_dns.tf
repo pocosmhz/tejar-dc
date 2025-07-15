@@ -1,3 +1,6 @@
+# Networking components
+# 3. External DNS
+
 # DNS and external-dns configuration for Kubernetes cluster onprem01
 data "google_dns_managed_zone" "onprem01_parent_dns" {
   count    = var.k8s_clusters["onprem01"].external_dns.parent_zone != null ? 1 : 0
