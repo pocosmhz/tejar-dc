@@ -13,6 +13,10 @@ terraform {
       source  = "opentofu/external"
       version = "2.3.5"
     }
+    http = {
+      source  = "opentofu/http"
+      version = "3.5.0"
+    }
   }
 }
 
