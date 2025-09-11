@@ -219,6 +219,21 @@ write_files:
       curl -L https://github.com/projectcalico/calico/releases/download/v$${CALICO_VERSION}/calicoctl-linux-amd64 -o /usr/local/bin/calicoctl
       chmod +x /usr/local/bin/calicoctl
 %{~ endif }
+%{~ if networking.plugin == "cilium" }
+      CILIUM_VERSION="${ networking.version.major }.${ networking.version.minor }.${ networking.version.patch }"
+      echo "`date` Installing Cilium CNI plugin..."
+      echo -n "`date` - Checking for Cilium CLI version ... "
+      CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
+      echo "$${CILIUM_CLI_VERSION}"
+      CLI_ARCH=amd64
+      if [ "$(uname -m)" = "aarch64" ]; then CLI_ARCH=arm64; fi
+      curl -L --fail --remote-name-all https://github.com/cilium/cilium-cli/releases/download/$${CILIUM_CLI_VERSION}/cilium-linux-$${CLI_ARCH}.tar.gz{,.sha256sum}
+      sha256sum --check cilium-linux-$${CLI_ARCH}.tar.gz.sha256sum
+      tar xzvfC cilium-linux-$${CLI_ARCH}.tar.gz /usr/local/bin
+      rm cilium-linux-$${CLI_ARCH}.tar.gz{,.sha256sum}
+      echo "`date` - Installing Cilium in the cluster ..."
+      export HOME=/root
+      cilium install --version $${CILIUM_VERSION}
 %{~ endif }
   - path: /run/scripts/kube-assets.sh
     content: |
@@ -231,6 +246,7 @@ write_files:
       echo "`date` Creating clusterrolebinding/terraform-binding ..."
       kubectl get clusterrolebinding/terraform-binding > /dev/null 2>&1 || \
         kubectl create clusterrolebinding terraform-binding --clusterrole=cluster-admin --serviceaccount=default:terraform
+%{~ endif }
 runcmd:
   - systemctl --now enable qemu-guest-agent
   - sh /run/scripts/hosts-entries.sh
@@ -241,6 +257,6 @@ runcmd:
   - sh /run/scripts/kubeadm.sh ${ node_type } ${ is_initial_node } ${tainted} ${certificate_key} > /tmp/kubeadm.log 2>&1
 %{~ if node_type == "cp" }
   - sh /run/scripts/cni-install.sh > /tmp/cni-install.log 2>&1
-%{~ endif }
   - sh /run/scripts/kube-assets.sh > /tmp/kube-assets.log 2>&1
+%{~ endif }
   - echo "done" > /tmp/cloud-config.done
