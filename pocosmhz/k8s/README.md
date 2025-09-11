@@ -46,3 +46,28 @@ You can use `externalTrafficPolicy` to `Cluster` with any other service besides 
 Also, in order to get access to source IP address you must enable `use_proxy_protocol` setting on Nginx ingress.
 
 And also, use the [unofficial solution](https://hub.docker.com/r/shilazi/kube-vip) suggested [here](https://github.com/kube-vip/kube-vip/issues/1027#issuecomment-2750374646).
+
+## TODO
+### OpenSearch
+
+0. Fix error:
+    ```
+    [2025-09-09T17:16:00,812][ERROR][o.o.s.c.ConfigurationLoaderSecurity7] [os01-bootstrap-0] Failure no such index [.opendistro_s
+ecurity] retrieving configuration for [ACTIONGROUPS, ALLOWLIST, AUDIT, CONFIG, INTERNALUSERS, NODESDN, ROLES, ROLESMAPPING, TE
+NANTS] (index=.opendistro_security)
+org.opensearch.index.IndexNotFoundException: no such index [.opendistro_security]
+    ```
+    And this
+    ```
+    [2025-09-09T17:23:36,176][ERROR][o.o.s.a.BackendRegistry  ] [os01-bootstrap-0] OpenSearch Security not initialized. (you may need to run securityadmin)
+    ```
+1. In the user / credentials section of OpenSearch, we have yet to customize the generic `*.tpl.yml` files included under folder `k8s/source/helm/opensearch`.
+
+2. For admin-credentials-secret, follow https://github.com/opensearch-project/opensearch-k8s-operator/blob/main/docs/userguide/main.md#custom-admin-user
+
+3. For securityConfigSecret, please see https://github.com/opensearch-project/opensearch-k8s-operator/blob/main/docs/userguide/main.md#user-and-role-management for further guidelines on how to complete that.
+
+4. Fix error:
+    ```
+    [2025-09-09T17:00:46,448][ERROR][o.o.s.a.BackendRegistry  ] [os01-nodes-0] OpenSearch Security not initialized. Cluster manager not present (you may need to run securityadmin)
+    ```
