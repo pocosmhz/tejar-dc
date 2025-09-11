@@ -77,6 +77,55 @@ variable "k8s_clusters" {
       pg_password         = optional(string, "pg_password")
       pg_resource_preset  = optional(string, "micro")
     }))
+    opensearch = optional(object({
+      ca_common_name         = optional(string, "example.int")
+      initial_admin_password = string
+      tls_secret_name        = optional(string, "opensearch-tls-secret")
+      ca_secret_name         = optional(string)
+      clusters = map(object({
+        version = optional(string, "2.1.0")
+        dashboards = optional(object({
+          enable   = optional(bool, false)
+          version  = optional(string, "2.1.0")
+          replicas = optional(number, 1)
+          resources = object({
+            requests = object({
+              cpu    = string
+              memory = string
+            })
+            limits = optional(object({
+              cpu    = string
+              memory = string
+            }))
+          })
+        }))
+        security = object({
+          tls = object({
+            transport = object({
+              generate = bool
+              per_node = bool
+              nodes_dn = optional(list(string), [])
+            })
+          })
+        })
+        node_pools = set(object({
+          component = string
+          replicas  = number
+          disk_size = string
+          resources = object({
+            requests = object({
+              cpu    = string
+              memory = string
+            })
+            limits = optional(object({
+              cpu    = string
+              memory = string
+            }))
+          })
+          roles = set(string)
+        }))
+      }))
+    }))
   }))
   default = {
     k8s01 = {
@@ -165,6 +214,68 @@ variable "k8s_clusters" {
         postgresql_ha       = false
         pg_password         = "pg_password"
         pg_resource_preset  = "micro"
+      }
+      opensearch = {
+        ca_common_name         = "example.int"
+        initial_admin_password = "strong-password"
+        tls_secret_name        = "opensearch-tls-secret"
+        clusters = {
+          os01 = {
+            version = "3.2.0"
+            security = {
+              tls = {
+                transport = {
+                  generate = false
+                  per_node = false
+                  nodes_dn = [
+                    "CN=opensearch.example.int"
+                  ]
+                }
+              }
+            }
+            dashboards = {
+              enable   = true
+              version  = "3.2.0"
+              replicas = 1
+              resources = {
+                requests = {
+                  cpu    = "500m"
+                  memory = "1Gi"
+                }
+                limits = {
+                  cpu    = "1"
+                  memory = "2Gi"
+                }
+              }
+            }
+            node_pools = [
+              {
+                component = "master"
+                replicas  = 3
+                disk_size = "20Gi"
+                resources = {
+                  requests = {
+                    cpu    = "500m"
+                    memory = "1Gi"
+                  }
+                }
+                roles = ["master", "data"]
+              },
+              {
+                component = "data"
+                replicas  = 2
+                disk_size = "50Gi"
+                resources = {
+                  requests = {
+                    cpu    = "500m"
+                    memory = "1Gi"
+                  }
+                }
+                roles = ["data"]
+              }
+            ]
+          }
+        }
       }
     }
   }

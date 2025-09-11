@@ -40,6 +40,7 @@ resource "helm_release" "cert_manager" {
   depends_on = [kubernetes_manifest.cert_manager_crds]
 }
 
+# This is needed by all our public domain SSL certificates.
 resource "kubernetes_manifest" "cluster_issuer_letsencrypt" {
   manifest = {
     apiVersion = "cert-manager.io/v1"
