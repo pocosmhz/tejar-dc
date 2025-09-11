@@ -1,4 +1,11 @@
 # Kubernetes cluster orchestration
+locals {
+  image_map = {
+    "debian" = module.pm_ve_vm_debian12_cloud_image
+    "ubuntu" = module.pm_ve_vm_ubuntu24_cloud_image
+  }
+}
+
 module "k8s_clusters" {
   source                      = "./modules/pm_k8s_cluster"
   for_each                    = var.proxmox_k8s_clusters
@@ -13,7 +20,7 @@ module "k8s_clusters" {
   nodes                       = each.value.nodes
   disks_datastore_id          = var.proxmox_datastore.disks_datastore.id
   tags                        = each.value.tags
-  image_list                  = module.pm_ve_vm_debian12_cloud_image
+  image_list                  = local.image_map[each.value.os_flavor]
   admin_users                 = var.admin_users
   network_bridge              = var.proxmox_network.bridge.id
   ha_groups                   = { for k, v in proxmox_virtual_environment_hagroup.pm_ve_hagroups : k => v }
