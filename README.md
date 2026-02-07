@@ -41,5 +41,5 @@ On top of that, this IaC repository will take care of all the resources that wil
 4. Apply Tofu manifests by doing:
     ```Shell
     cd pocosmhz/tejar-dc
-    ./apply.sh
+    tofu apply
     ```
