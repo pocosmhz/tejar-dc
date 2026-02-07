@@ -23,7 +23,7 @@ module "k8s_clusters" {
   image_list                  = local.image_map[each.value.os_flavor]
   admin_users                 = var.admin_users
   network_bridge              = var.proxmox_network.bridge.id
-  ha_groups                   = { for k, v in proxmox_virtual_environment_hagroup.pm_ve_hagroups : k => v }
+  # ha_groups                   = { for k, v in proxmox_virtual_environment_hagroup.pm_ve_hagroups : k => v }
 }
 
 resource "time_sleep" "wait_pm_jump_host_30_seconds" {

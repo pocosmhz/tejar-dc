@@ -15,6 +15,6 @@ module "pm_jump_host" {
   hosts = flatten(
     [for k, v in module.k8s_clusters : v.hosts]
   )
-  ha_group = proxmox_virtual_environment_hagroup.pm_ve_hagroups["pve01"].id
+  # ha_group = proxmox_virtual_environment_hagroup.pm_ve_hagroups["pve01"].id
   tags     = ["debian", "ssh-piper"]
 }

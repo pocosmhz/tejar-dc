@@ -95,6 +95,7 @@ variable "admin_users" {
 variable "ha_group" {
   description = "HA group for the VM"
   type        = string
+  default     = null
 }
 
 variable "hosts" {

@@ -146,6 +146,7 @@ variable "disks_datastore_id" {
 variable "ha_group" {
   description = "HA group for the VM"
   type        = string
+  default     = null
 }
 
 variable "network_bridge" {
