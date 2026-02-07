@@ -66,7 +66,7 @@ variable "proxmox_vm_default_images" {
     }
     debian13 = {
       url       = "https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-genericcloud-amd64-daily.qcow2"
-      file_name = "debian-12-genericcloud-amd64.img"
+      file_name = "debian-13-genericcloud-amd64.img"
     }
   }
 }
