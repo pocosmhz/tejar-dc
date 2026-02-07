@@ -109,5 +109,5 @@ variable "hosts" {
 variable "sshpiper_version" {
   description = "Version of SSHPiper to be used"
   type        = string
-  default     = "1.5.0"
+  default     = "1.5.2"
 }
