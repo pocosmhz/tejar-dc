@@ -25,22 +25,28 @@ resource "random_string" "bootstrap_token_secret" {
 
 module "pm_k8s_node" {
   source                      = "./modules/pm_k8s_node"
+  for_each                    = var.nodes
+
   tags                        = var.tags
   apiserver_advertise_address = var.apiserver_advertise_address
   apiserver_bind_port         = var.apiserver_bind_port
   timezone                    = var.timezone
   admin_users                 = var.admin_users
   bootstrap_token             = "${random_string.bootstrap_token_id.result}.${random_string.bootstrap_token_secret.result}"
-  ha_group                    = var.ha_groups[each.value.pve_node].id
+
+  ha_group = var.ha_groups != null ? try(var.ha_groups[each.value.pve_node].id, null) : null
   network_bridge              = var.network_bridge
   disks_datastore_id          = var.disks_datastore_id
-  for_each                    = var.nodes
   hostname                    = each.key
-  hosts_entries = each.value.hosts_entries_override != null ? each.value.hosts_entries_override : [for hk, hv in var.nodes : {
-    ip_address = split("/", hv.ip_address)[0]
-    hostname   = hk
-    node_type  = hv.node_type
-  }]
+
+  hosts_entries = each.value.hosts_entries_override != null ? each.value.hosts_entries_override : [
+    for hk, hv in var.nodes : {
+      ip_address = split("/", hv.ip_address)[0]
+      hostname   = hk
+      node_type  = hv.node_type
+    }
+  ]
+
   certificate_key = each.value.certificate_key != null ? each.value.certificate_key : ""
   k8s_version     = each.value.version_override != null ? each.value.version_override : var.k8s_version
   networking      = each.value.networking_override != null ? each.value.networking_override : var.networking

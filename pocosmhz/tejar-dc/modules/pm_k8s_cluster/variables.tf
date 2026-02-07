@@ -154,7 +154,7 @@ variable "ha_groups" {
     restricted  = optional(bool, false)
     nodes       = map(number)
   }))
-  default = {}
+  default = null
 }
 
 variable "network_bridge" {
