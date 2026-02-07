@@ -9,7 +9,7 @@ resource "helm_release" "gitea" {
   name       = "gitea"
   repository = "https://dl.gitea.com/charts"
   chart      = "gitea"
-  version    = "12.1.1"
+  version    = "12.5.0"
   namespace  = kubernetes_namespace.gitea.id
   values = [
     templatefile("${path.module}/source/helm/gitea/gitea-values.tpl.yml", {
