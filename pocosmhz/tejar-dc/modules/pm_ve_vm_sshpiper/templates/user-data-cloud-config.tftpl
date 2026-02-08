@@ -71,7 +71,14 @@ write_files:
 
       [Service]
       WorkingDirectory=/usr/local/bin/sshpiperd
-      ExecStart=/usr/local/bin/sshpiperd/sshpiperd --server-key '/etc/sshpiperd/keys/*key' plugins/yaml --config /etc/sshpiperd/sshpiperd.yaml -- plugins/failtoban
+      ExecStart=/usr/local/bin/sshpiperd/sshpiperd \
+        --server-key '/etc/sshpiperd/keys/*key' \
+        plugins/yaml \
+        --config /etc/sshpiperd/sshpiperd.yaml \
+        -- \
+        plugins/failtoban \
+        --max-failures 4 \
+        --ban-duration 2h
       Restart=always
       # Restart service after 10 seconds if node service crashes
       RestartSec=10
