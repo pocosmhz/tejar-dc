@@ -165,6 +165,35 @@ variable "proxmox_jump_host" {
   }
 }
 
+# Standalone host list
+variable "proxmox_standalone_hosts" {
+  description = "List of standalone hosts to create"
+  type = map(object({
+    node          = string
+    ip_address    = string
+    ip_gateway    = string
+    cpu_cores     = number
+    memory        = number
+    disk_size     = number
+    template_name = string
+    image_id      = optional(string, null)
+    packages      = optional(list(string), [])
+    tags          = optional(list(string), [])
+  }))
+  default = {
+    linux01 = {
+      node          = "pve02"
+      ip_address    = "192.168.1.6/24"
+      ip_gateway    = "192.168.1.1"
+      cpu_cores     = 2
+      memory        = 2048
+      disk_size     = 20
+      template_name = "debian12"
+      image_id      = "local:iso/debian-13-genericcloud-amd64.img"
+    }
+  }
+}
+
 # VM default values
 variable "admin_users" {
   description = "List of admin users"
