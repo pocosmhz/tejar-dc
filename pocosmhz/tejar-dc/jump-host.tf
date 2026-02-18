@@ -3,11 +3,14 @@ locals {
   all_accessible_hosts = concat(
     flatten([for k, v in module.k8s_clusters : v.hosts]),
     [for k, v in module.pm_linux_hosts : {
-      name           = k
-      ip             = v.ip
-      ssh_key        = v.ssh_key
-      ssh_public_key = v.ssh_public_key
-      id             = v.id
+      name    = k
+      ip      = v.ip
+      ssh_key = v.ssh_key
+    }],
+    [for k, v in module.onprem_linux_hosts : {
+      name    = k
+      ip      = v.ip
+      ssh_key = v.ssh_key
     }]
   )
 }

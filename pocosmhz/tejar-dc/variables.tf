@@ -331,3 +331,16 @@ variable "proxmox_k8s_clusters" {
     }
   }
 }
+
+# On-premises host list
+variable "onprem_standalone_hosts" {
+  description = "List of on-premises hosts to allow access to"
+  type = map(object({
+    ip_address = string
+  }))
+  default = {
+    linux01 = {
+      ip_address = "192.168.1.6/24"
+    }
+  }
+}
