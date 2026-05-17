@@ -3,18 +3,18 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.94.0"
+      version = "0.106.0"
     }
     tls = {
       source  = "opentofu/tls"
       version = "4.2.1"
     }
     external = {
-      source  = "hashicorp/external"
+      source  = "opentofu/external"
       version = "2.3.5"
     }
     http = {
-      source  = "hashicorp/http"
+      source  = "opentofu/http"
       version = "3.5.0"
     }
   }

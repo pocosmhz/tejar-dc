@@ -1,58 +1,62 @@
-# Terraform Reference
-
 ## Requirements
 
 | Name | Version |
-|------|---------|
-| terraform | >= 1.1, < 1.11.4 |
+| ---- | ------- |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1, < 1.11.4 |
+| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.106.0 |
+| <a name="requirement_tls"></a> [tls](#requirement\_tls) | 4.2.1 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
-| bpg/proxmox | 0.94.0 |
-| hashicorp/tls | 4.1.0 |
+| ---- | ------- |
+| <a name="provider_proxmox"></a> [proxmox](#provider\_proxmox) | 0.106.0 |
+| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.2.1 |
+
+## Modules
+
+No modules.
 
 ## Resources
 
 | Name | Type |
-|------|------|
-| `proxmox_virtual_environment_file.meta_data_cloud_config` | resource |
-| `proxmox_virtual_environment_file.user_data_cloud_config` | resource |
-| `proxmox_virtual_environment_vm.vm` | resource |
-| `proxmox_virtual_environment_haresource.hares` | resource |
-| `tls_private_key.pk` | resource |
+| ---- | ---- |
+| [proxmox_virtual_environment_file.meta_data_cloud_config](https://registry.terraform.io/providers/bpg/proxmox/0.106.0/docs/resources/virtual_environment_file) | resource |
+| [proxmox_virtual_environment_file.user_data_cloud_config](https://registry.terraform.io/providers/bpg/proxmox/0.106.0/docs/resources/virtual_environment_file) | resource |
+| [proxmox_virtual_environment_haresource.hares](https://registry.terraform.io/providers/bpg/proxmox/0.106.0/docs/resources/virtual_environment_haresource) | resource |
+| [proxmox_virtual_environment_vm.vm](https://registry.terraform.io/providers/bpg/proxmox/0.106.0/docs/resources/virtual_environment_vm) | resource |
+| [tls_private_key.pk](https://registry.terraform.io/providers/opentofu/tls/4.2.1/docs/resources/private_key) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| `admin_users` | List of admin users | `list(object({ name = string, gecos = string, ssh_key = string }))` | n/a | yes |
-| `cpu_cores` | Number of CPU cores | `number` | `1` | no |
-| `cpu_type` | CPU type | `string` | `"x86-64-v2-AES"` | no |
-| `disk_size` | Size of the disk in GB | `number` | `10` | no |
-| `disks_datastore_id` | ID of the datastore where the disks will be stored | `string` | `"local"` | no |
-| `ha_group` | HA group for the VM | `string` | `null` | no |
-| `hostname` | Name of the VM | `string` | n/a | yes |
-| `image_id` | ID of the image to be used | `string` | n/a | yes |
-| `ip_address` | IP address of the VM | `string` | n/a | yes |
-| `ip_gateway` | Gateway IP address | `string` | n/a | yes |
-| `memory` | Dedicated memory size in MB | `number` | `512` | no |
-| `network_bridge` | Network bridge to be used | `string` | `"vmbr0"` | no |
-| `node_id` | Proxmox node ID where the VM will be created | `string` | n/a | yes |
-| `os_type` | Operating system type | `string` | `"l26"` | no |
-| `packages` | List of packages to be installed on the VM | `list(string)` | `[]` | no |
-| `parameters` | Generic parameters object for custom VM configuration | `any` | `{}` | no |
-| `snippets_datastore_id` | ID of the datastore where the snippets will be stored | `string` | `"local"` | no |
-| `tags` | Tags for the VM | `list(string)` | `[]` | no |
-| `timezone` | Timezone for the VM | `string` | `"UTC"` | no |
-| `user_data_template` | Template file path for user-data cloud-config | `string` | n/a | yes |
+| ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_admin_users"></a> [admin\_users](#input\_admin\_users) | List of admin users | <pre>list(object({<br/>    name    = string<br/>    gecos   = string<br/>    ssh_key = string<br/>  }))</pre> | n/a | yes |
+| <a name="input_cpu_cores"></a> [cpu\_cores](#input\_cpu\_cores) | Number of CPU cores | `number` | `1` | no |
+| <a name="input_cpu_type"></a> [cpu\_type](#input\_cpu\_type) | CPU type | `string` | `"x86-64-v2-AES"` | no |
+| <a name="input_disk_size"></a> [disk\_size](#input\_disk\_size) | Size of the disk in GB | `number` | `10` | no |
+| <a name="input_disks_datastore_id"></a> [disks\_datastore\_id](#input\_disks\_datastore\_id) | ID of the datastore where the disks will be stored | `string` | `"local"` | no |
+| <a name="input_ha_group"></a> [ha\_group](#input\_ha\_group) | HA group for the VM | `string` | `null` | no |
+| <a name="input_hostname"></a> [hostname](#input\_hostname) | Name of the VM | `string` | n/a | yes |
+| <a name="input_image_id"></a> [image\_id](#input\_image\_id) | ID of the image to be used | `string` | n/a | yes |
+| <a name="input_ip_address"></a> [ip\_address](#input\_ip\_address) | IP address of the VM | `string` | n/a | yes |
+| <a name="input_ip_gateway"></a> [ip\_gateway](#input\_ip\_gateway) | Gateway IP address | `string` | n/a | yes |
+| <a name="input_memory"></a> [memory](#input\_memory) | Dedicated memory size in MB | `number` | `512` | no |
+| <a name="input_network_bridge"></a> [network\_bridge](#input\_network\_bridge) | Network bridge to be used | `string` | `"vmbr0"` | no |
+| <a name="input_node_id"></a> [node\_id](#input\_node\_id) | Proxmox node ID where the VM will be created | `string` | n/a | yes |
+| <a name="input_os_type"></a> [os\_type](#input\_os\_type) | Operating system type | `string` | `"l26"` | no |
+| <a name="input_packages"></a> [packages](#input\_packages) | List of packages to be installed on the VM | `list(string)` | `[]` | no |
+| <a name="input_parameters"></a> [parameters](#input\_parameters) | Generic parameters object for custom VM configuration | `any` | `{}` | no |
+| <a name="input_snippets_datastore_id"></a> [snippets\_datastore\_id](#input\_snippets\_datastore\_id) | ID of the datastore where the snippets will be stored | `string` | `"local"` | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags for the VM | `list(string)` | `[]` | no |
+| <a name="input_timezone"></a> [timezone](#input\_timezone) | Timezone for the VM | `string` | `"UTC"` | no |
+| <a name="input_user_data_template"></a> [user\_data\_template](#input\_user\_data\_template) | Template file path for user-data cloud-config | `string` | n/a | yes |
 
 ## Outputs
 
 | Name | Description |
-|------|-------------|
-| `id` | ID of the created VM |
-| `ip` | IP address of the VM |
-| `ssh_key` | SSH private key for root access |
-| `ssh_public_key` | SSH public key for root access |
+| ---- | ----------- |
+| <a name="output_id"></a> [id](#output\_id) | ID of the created VM |
+| <a name="output_ip"></a> [ip](#output\_ip) | IP address of the VM |
+| <a name="output_ssh_key"></a> [ssh\_key](#output\_ssh\_key) | SSH private key for root access |
+| <a name="output_ssh_public_key"></a> [ssh\_public\_key](#output\_ssh\_public\_key) | SSH public key for root access |

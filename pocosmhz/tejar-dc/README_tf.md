@@ -1,22 +1,26 @@
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1, < 1.11.4 |
-| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.94.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1, <= 1.9.1 |
+| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.106.0 |
+| <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.106.0 |
 | <a name="requirement_time"></a> [time](#requirement\_time) | 0.13.1 |
+| <a name="requirement_time"></a> [time](#requirement\_time) | 0.13.1 |
+| <a name="requirement_tls"></a> [tls](#requirement\_tls) | 4.2.1 |
 | <a name="requirement_tls"></a> [tls](#requirement\_tls) | 4.2.1 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_time"></a> [time](#provider\_time) | 0.13.1 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_k8s_clusters"></a> [k8s\_clusters](#module\_k8s\_clusters) | ./modules/pm_k8s_cluster | n/a |
 | <a name="module_k8s_clusters_get_access"></a> [k8s\_clusters\_get\_access](#module\_k8s\_clusters\_get\_access) | ./modules/pm_k8s_cluster_get_access | n/a |
 | <a name="module_onprem_linux_hosts"></a> [onprem\_linux\_hosts](#module\_onprem\_linux\_hosts) | ./modules/onprem_host | n/a |
@@ -29,13 +33,13 @@
 ## Resources
 
 | Name | Type |
-|------|------|
-| [time_sleep.wait_pm_jump_host_30_seconds](https://registry.terraform.io/providers/hashicorp/time/0.13.1/docs/resources/sleep) | resource |
+| ---- | ---- |
+| [time_sleep.wait_pm_jump_host_30_seconds](https://registry.terraform.io/providers/opentofu/time/0.13.1/docs/resources/sleep) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_admin_users"></a> [admin\_users](#input\_admin\_users) | List of admin users | <pre>list(object({<br/>    name    = string<br/>    gecos   = string<br/>    ssh_key = string<br/>  }))</pre> | <pre>[<br/>  {<br/>    "gecos": "Admin User",<br/>    "name": "admin",<br/>    "ssh_key": "ssh-rsa AAAABXXXXXXXXXXX admin@randomhost"<br/>  }<br/>]</pre> | no |
 | <a name="input_onprem_standalone_hosts"></a> [onprem\_standalone\_hosts](#input\_onprem\_standalone\_hosts) | List of on-premises hosts to allow access to | <pre>map(object({<br/>    ip_address = string<br/>  }))</pre> | <pre>{<br/>  "linux01": {<br/>    "ip_address": "192.168.1.6/24"<br/>  }<br/>}</pre> | no |
 | <a name="input_proxmox_datastore"></a> [proxmox\_datastore](#input\_proxmox\_datastore) | Proxmox datastore configuration | <pre>map(object({<br/>    id = string<br/>  }))</pre> | <pre>{<br/>  "disks_datastore": {<br/>    "id": "pool1"<br/>  },<br/>  "iso_datastore": {<br/>    "id": "local"<br/>  },<br/>  "local_datastore": {<br/>    "id": "local"<br/>  }<br/>}</pre> | no |
@@ -57,5 +61,5 @@
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_k8s_cluster_data"></a> [k8s\_cluster\_data](#output\_k8s\_cluster\_data) | Access data about the Kubernetes clusters. |
