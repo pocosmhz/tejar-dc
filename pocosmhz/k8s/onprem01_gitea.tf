@@ -9,8 +9,10 @@ resource "helm_release" "gitea" {
   name       = "gitea"
   repository = "https://dl.gitea.com/charts"
   chart      = "gitea"
-  version    = "12.5.0"
-  namespace  = kubernetes_namespace.gitea.id
+  # 12.7.0 defaults to Gitea 1.27.0, which is affected by CVE-2026-60004.
+  # The values file explicitly pins the patched 1.27.1 application image.
+  version   = "12.7.0"
+  namespace = kubernetes_namespace.gitea.id
   values = [
     templatefile("${path.module}/source/helm/gitea/gitea-values.tpl.yml", {
       gitea_conf = var.k8s_clusters["onprem01"].gitea

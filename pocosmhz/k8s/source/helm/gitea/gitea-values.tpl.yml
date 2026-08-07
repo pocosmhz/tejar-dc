@@ -31,7 +31,9 @@ replicaCount: 1
 ## @param strategy.rollingUpdate.maxSurge maxSurge
 ## @param strategy.rollingUpdate.maxUnavailable maxUnavailable
 strategy:
-  type: "RollingUpdate"
+  # The shared Gitea PVC is ReadWriteOnce. Recreate prevents a rollout from
+  # deadlocking while old and new pods compete to attach the same volume.
+  type: "Recreate"
   rollingUpdate:
     maxSurge: "100%"
     maxUnavailable: 0
@@ -51,8 +53,11 @@ image:
   registry: "docker.gitea.com"
   repository: gitea
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
-  digest: ""
+  # Chart 12.7.0 defaults to vulnerable Gitea 1.27.0. Keep this explicit until
+  # a newer chart ships with an application version containing CVE-2026-60004's fix.
+  tag: "1.27.1"
+  # Multi-architecture OCI index digest for docker.gitea.com/gitea:1.27.1-rootless.
+  digest: "sha256:36cce26be71609091e1236d5b5de2c66a81fb8a7d45756a5fd3b7a28c11733b7"
   pullPolicy: IfNotPresent
   rootless: true
   fullOverride: ""
@@ -67,7 +72,18 @@ podSecurityContext:
   fsGroup: 1000
 
 ## @param containerSecurityContext Security context
-containerSecurityContext: {}
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+  seccompProfile:
+    type: RuntimeDefault
 #   allowPrivilegeEscalation: false
 #   capabilities:
 #     drop:
@@ -187,7 +203,12 @@ ingress:
 #
 ## @param resources Kubernetes resources
 resources:
-  {}
+  limits:
+    cpu: "1"
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -245,7 +266,10 @@ deployment:
 ## @param serviceAccount.annotations Custom annotations for the ServiceAccount
 ## @param serviceAccount.labels Custom labels for the ServiceAccount
 serviceAccount:
-  create: false
+  # Use a dedicated account so automountServiceAccountToken is applied to the
+  # pod. With create=false the pod used Kubernetes' default service account and
+  # received an API token it did not need.
+  create: true
   name: ""
   automountServiceAccountToken: false
   imagePullSecrets: []
@@ -438,6 +462,10 @@ gitea:
     server:
       SSH_PORT: 22 # rootful image
       SSH_LISTEN_PORT: 2222 # rootless image
+    service:
+      # Registration is unnecessary for this private instance and previously
+      # turned CVE-2026-60004 into unauthenticated remote code execution.
+      DISABLE_REGISTRATION: true
   #
   #  security:
   #    PASSWORD_COMPLEXITY: spec
