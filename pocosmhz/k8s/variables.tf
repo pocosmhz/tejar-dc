@@ -86,6 +86,16 @@ variable "k8s_clusters" {
       storage_class  = optional(string, "csi-rbd-sc")
       storage_size   = optional(string, "10Gi")
     }))
+    irc = optional(object({
+      irc_domain          = optional(string, "irc.k8s.example.com")
+      chat_domain         = optional(string, "chat.k8s.example.com")
+      target              = optional(string, "")
+      network_name        = optional(string, "ExampleIRC")
+      ingress_class       = optional(string, "nginx")
+      storage_class       = optional(string, "csi-rbd-sc")
+      ergo_storage_size   = optional(string, "10Gi")
+      lounge_storage_size = optional(string, "10Gi")
+    }))
   }))
   default = {
     k8s01 = {
@@ -183,6 +193,16 @@ variable "k8s_clusters" {
         admin_email    = "forgejo@example.com"
         storage_class  = "csi-rbd-sc"
         storage_size   = "10Gi"
+      }
+      irc = {
+        irc_domain          = "irc.k8s.example.com"
+        chat_domain         = "chat.k8s.example.com"
+        target              = "external01.example.com"
+        network_name        = "ExampleIRC"
+        ingress_class       = "nginx"
+        storage_class       = "csi-rbd-sc"
+        ergo_storage_size   = "10Gi"
+        lounge_storage_size = "10Gi"
       }
     }
   }

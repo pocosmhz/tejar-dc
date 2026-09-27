@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ergo
+  labels:
+    app.kubernetes.io/name: ergo
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: ergo
+  ports:
+    - name: ircs
+      port: 6697
+      targetPort: ircs
+      protocol: TCP

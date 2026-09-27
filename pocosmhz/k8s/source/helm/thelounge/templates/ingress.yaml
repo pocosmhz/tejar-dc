@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: thelounge
+  annotations:
+    external-dns.alpha.kubernetes.io/ingress-hostname-source: annotation-only
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: {{ .Values.ingressClass | quote }}
+  tls:
+    - hosts:
+        - {{ .Values.chatHost | quote }}
+      secretName: {{ .Values.tlsSecretName }}
+  rules:
+    - host: {{ .Values.chatHost | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: thelounge
+                port:
+                  name: http

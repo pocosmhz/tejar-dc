@@ -494,7 +494,10 @@ controller:
       # -- Labels to be added to the external controller service.
       labels: {}
     # -- Annotations to be added to the external controller service. See `controller.service.internal.annotations` for annotations to be added to the internal controller service.
-    annotations: {}
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: "${irc_conf.irc_domain}"
+      external-dns.alpha.kubernetes.io/target: "${irc_conf.target}"
+      external-dns.alpha.kubernetes.io/ttl: "300"
     # -- Labels to be added to both controller services.
     labels: {}
     # -- Type of the external controller service.
@@ -1225,7 +1228,8 @@ imagePullSecrets: []
 # -- TCP service key-value pairs
 ## Ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/exposing-tcp-udp-services.md
 ##
-tcp: {}
+tcp:
+  6697: "irc/ergo:6697"
 #  "8080": "default/example-tcp-svc:9000"
 
 # -- UDP service key-value pairs
