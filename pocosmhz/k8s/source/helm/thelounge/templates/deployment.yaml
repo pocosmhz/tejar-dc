@@ -15,6 +15,7 @@ spec:
         app.kubernetes.io/name: thelounge
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/branding: {{ include (print $.Template.BasePath "/branding-configmap.yaml") . | sha256sum }}
     spec:
       automountServiceAccountToken: false
       hostAliases:
@@ -68,6 +69,30 @@ spec:
               readOnly: true
             - name: tmp
               mountPath: /tmp
+{{- if .Values.branding.enabled }}
+{{- range list "logo-vertical-transparent-bg.svg" "logo-vertical-transparent-bg-inverted.svg" "logo-transparent-bg.svg" "logo-transparent-bg-inverted.svg" "logo-horizontal-transparent-bg.svg" "logo-horizontal-transparent-bg-inverted.svg" }}
+            - name: branding
+              mountPath: /usr/local/share/.config/yarn/global/node_modules/thelounge/public/img/{{ . }}
+              subPath: logo.svg
+              readOnly: true
+{{- end }}
+{{- range list "logo-grey-bg.svg" "icon-black-transparent-bg.svg" "favicon-alerted.ico" "logo-grey-bg-120x120px.png" "logo-grey-bg-152x152px.png" "logo-grey-bg-167x167px.png" "logo-grey-bg-180x180px.png" "logo-grey-bg-192x192px.png" "logo-grey-bg-512x512px.png" }}
+            - name: branding
+              mountPath: /usr/local/share/.config/yarn/global/node_modules/thelounge/public/img/{{ . }}
+              subPath: {{ . }}
+              readOnly: true
+{{- end }}
+            - name: branding
+              mountPath: /usr/local/share/.config/yarn/global/node_modules/thelounge/public/favicon.ico
+              subPath: favicon.ico
+              readOnly: true
+{{- end }}
+{{- if .Values.branding.stylesheet }}
+            - name: branding
+              mountPath: /usr/local/share/.config/yarn/global/node_modules/thelounge/public/themes/default.css
+              subPath: default.css
+              readOnly: true
+{{- end }}
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -77,3 +102,8 @@ spec:
             name: thelounge-config
         - name: tmp
           emptyDir: {}
+{{- if or .Values.branding.enabled .Values.branding.stylesheet }}
+        - name: branding
+          configMap:
+            name: thelounge-branding
+{{- end }}

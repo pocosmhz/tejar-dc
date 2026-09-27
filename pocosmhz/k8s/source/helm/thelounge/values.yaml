@@ -11,6 +11,12 @@ tlsSecretName: thelounge-https-tls
 storageClass: csi-rbd-sc
 storageSize: 10Gi
 
+branding:
+  enabled: true
+  logoFile: files/pocosmhz_white.svg
+  # CSS appended to The Lounge's default theme when provided.
+  stylesheet: ""
+
 resources:
   requests:
     cpu: 50m

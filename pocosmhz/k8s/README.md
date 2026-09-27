@@ -204,3 +204,13 @@ credentials in The Lounge; the web and IRC passwords are independent.
 See the official [The Lounge user guide](https://thelounge.chat/docs/users)
 for account management and [configuration reference](https://thelounge.chat/docs/configuration)
 for private mode and network settings.
+
+The chart's `branding.enabled` setting uses `files/pocosmhz_white.svg` for the
+loading screen, sign-in page, and application sidebar in both light and dark
+themes. A cropped vector P also replaces the browser, home screen, and Helm
+chart icons. To use another full logo, place it in the chart's `files/` directory and set
+`branding.logoFile` to its chart-relative path. Set `branding.enabled: false`
+to use The Lounge's own logos. The optional `branding.stylesheet` value appends
+CSS to The Lounge's default theme; it is empty by default. The logo mounts use
+asset paths from the pinned The Lounge image version, so check them before
+upgrading that image.

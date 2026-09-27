@@ -240,10 +240,15 @@ resource "helm_release" "thelounge" {
   wait            = true
   timeout         = 900
 
-  values = [templatefile("${path.module}/source/helm/thelounge/thelounge-values.tpl.yml", {
-    irc_conf       = var.k8s_clusters["onprem01"].irc
-    irc_service_ip = data.kubernetes_service_v1.ergo.spec[0].cluster_ip
-  })]
+  values = [
+    templatefile("${path.module}/source/helm/thelounge/thelounge-values.tpl.yml", {
+      irc_conf       = var.k8s_clusters["onprem01"].irc
+      irc_service_ip = data.kubernetes_service_v1.ergo.spec[0].cluster_ip
+    }),
+    yamlencode({
+      chartRevision = sha256(join("", [for file in sort(fileset("${path.module}/source/helm/thelounge", "**")) : filesha256("${path.module}/source/helm/thelounge/${file}")]))
+    })
+  ]
 
   depends_on = [
     kubernetes_manifest.chat_certificate,
