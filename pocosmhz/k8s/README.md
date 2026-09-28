@@ -57,8 +57,30 @@ The public listener requires an existing account; users cannot register their
 own accounts. Clients can authenticate with SASL or the legacy `PASS
 <account>:<password>` form.
 
-To create the first account, retrieve the generated operator password from the
-cluster Secret, then connect to the local-only bootstrap listener inside the
+To create matching Ergo and The Lounge accounts, run the scripts from this
+directory with access to the cluster through `kubectl`:
+
+```sh
+./scripts/add-chat-user.sh alice
+./scripts/del-chat-user.sh alice
+```
+
+The add script prompts twice for one password and creates the Ergo account
+first. It creates the Lounge user only after Ergo confirms success. Passwords
+are the same initially; later password changes in either application do not
+sync. If the second step fails, the script reports the partial result for
+manual recovery. Aliases must be lowercase, start with a letter, contain only
+letters, digits, `_`, or `-`, and be at most 32 characters.
+
+The delete script asks for confirmation, unregisters the Ergo account, then
+removes the Lounge user. Ergo keeps an unregistered account name reserved, and
+unregistration removes any channels that account founded. Transfer channel
+ownership first if needed. The Lounge `remove` command leaves its old log files
+on disk. See the [Ergo manual](https://github.com/ergochat/ergo/blob/master/docs/MANUAL.md)
+and [The Lounge user guide](https://thelounge.chat/docs/users).
+
+For manual bootstrap or recovery, retrieve the generated operator password
+from the cluster Secret, then connect to the local-only listener inside the
 Ergo pod:
 
 ```sh
@@ -189,7 +211,8 @@ configuration sets `public: false`, so visitors see a login page and cannot
 create their own accounts. It also locks the IRC network address and TLS
 settings to the configured Ergo service.
 
-Create a separate web account for each person after the Deployment is ready:
+The account script above creates a web account at the same time as the Ergo
+account. To create one manually after the Deployment is ready:
 
 ```sh
 kubectl -n irc exec -it deploy/thelounge -- thelounge add alice
@@ -199,7 +222,8 @@ The command prompts for a web password. To list users, reset a password, or
 remove a user, run `thelounge list`, `thelounge reset <name>`, or `thelounge
 remove <name>` in the same Deployment. Changes take effect without restarting
 The Lounge. Each person also needs an Ergo account and should enter those IRC
-credentials in The Lounge; the web and IRC passwords are independent.
+credentials in The Lounge. The web and IRC passwords remain independent even
+when the account script sets them to the same initial value.
 
 See the official [The Lounge user guide](https://thelounge.chat/docs/users)
 for account management and [configuration reference](https://thelounge.chat/docs/configuration)

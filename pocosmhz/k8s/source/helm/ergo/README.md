@@ -20,7 +20,15 @@ ClusterIP directly while retaining the public hostname for TLS verification.
 The only plaintext IRC listener is bound to `127.0.0.1` inside the Ergo pod for
 operator bootstrap; no Service exposes it.
 
-## Create the first accounts
+## Create and remove accounts
+
+From `pocosmhz/k8s`, use `./scripts/add-chat-user.sh alice` to create matching
+Ergo and The Lounge users with the same initial password. Use
+`./scripts/del-chat-user.sh alice` to unregister Ergo first and then remove the
+Lounge user. Password changes after creation do not synchronize. Ergo preserves
+the unregistered account name as reserved, and The Lounge keeps old log files.
+
+For manual bootstrap or recovery:
 
 Retrieve the generated Ergo operator password:
 
@@ -53,9 +61,9 @@ Create each person's separate The Lounge web account with:
 kubectl -n irc exec -it deploy/thelounge -- thelounge add alice
 ```
 
-The Lounge web and Ergo account passwords are independent. When someone changes
-their Ergo password, they must update the saved IRC network password in The
-Lounge too.
+The Lounge web and Ergo account passwords are independent after creation. When
+someone changes their Ergo password, they must update the saved IRC network
+password in The Lounge too.
 
 ## Certificates
 
