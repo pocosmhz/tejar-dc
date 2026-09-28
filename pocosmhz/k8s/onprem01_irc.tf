@@ -202,8 +202,8 @@ resource "kubernetes_network_policy_v1" "thelounge" {
       }
     }
 
-    # Permit public link previews, while blocking requests into the LAN and
-    # cluster from URLs posted in IRC messages.
+    # Permit public link previews and TLS connections to other IRC networks,
+    # while blocking requests into the LAN and cluster.
     egress {
       to {
         ip_block {
@@ -224,6 +224,10 @@ resource "kubernetes_network_policy_v1" "thelounge" {
       }
       ports {
         port     = "443"
+        protocol = "TCP"
+      }
+      ports {
+        port     = "6697"
         protocol = "TCP"
       }
     }
