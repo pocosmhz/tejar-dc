@@ -58,7 +58,8 @@ own accounts. Clients can authenticate with SASL or the legacy `PASS
 <account>:<password>` form.
 
 To create matching Ergo and The Lounge accounts, run the scripts from this
-directory with access to the cluster through `kubectl`:
+directory. See the [scripts README](scripts/README.md) for requirements,
+including `kubectl` access and `nc` inside the Ergo container:
 
 ```sh
 ./scripts/add-chat-user.sh alice
