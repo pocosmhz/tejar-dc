@@ -1,4 +1,4 @@
-# Shared functions for add-chat-user.sh and del-chat-user.sh.
+# Shared functions for the chat-user scripts.
 # This file is sourced by /bin/sh; it is not run directly.
 
 LC_ALL=C

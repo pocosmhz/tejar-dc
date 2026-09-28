@@ -64,6 +64,7 @@ including `kubectl` access and `nc` inside the Ergo container:
 ```sh
 ./scripts/add-chat-user.sh alice
 ./scripts/del-chat-user.sh alice
+./scripts/list-chat-user.sh
 ```
 
 The add script prompts twice for one password and creates the Ergo account

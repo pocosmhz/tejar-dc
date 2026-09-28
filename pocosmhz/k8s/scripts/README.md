@@ -2,7 +2,8 @@
 
 `add-chat-user.sh` creates an Ergo account and then a user in The Lounge with the
 same initial password. `del-chat-user.sh` unregisters the Ergo account and then
-removes the Lounge user.
+removes the Lounge user. `list-chat-user.sh` shows both sets of names without
+changing either service.
 
 ## Requirements
 
@@ -23,7 +24,15 @@ From `pocosmhz/k8s`, run:
 ```sh
 ./scripts/add-chat-user.sh alice
 ./scripts/del-chat-user.sh alice
+./scripts/list-chat-user.sh
 ```
+
+The list script shows Ergo's registered nicknames and The Lounge's web users in
+separate sections. This deployment forces an authenticated IRC nickname to
+equal its account name and permits no additional grouped nicknames, so the
+Ergo list represents the current account names. See Ergo's [NickServ LIST
+implementation](https://github.com/ergochat/ergo/blob/v2.19.1/irc/nickserv.go)
+and [The Lounge user documentation](https://thelounge.chat/docs/users).
 
 Aliases must start with a lowercase letter, use only lowercase letters,
 digits, `_`, or `-`, and be no longer than 32 characters. See the [Kubernetes
