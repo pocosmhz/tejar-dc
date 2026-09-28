@@ -67,6 +67,11 @@ including `kubectl` access and `nc` inside the Ergo container:
 ./scripts/list-chat-user.sh
 ```
 
+Ergo and The Lounge keep separate account lists. These scripts try to keep
+them aligned, while `list-chat-user.sh` reads and displays each list
+independently. A partial failure or a manual change can leave different users
+in the two services.
+
 The add script prompts twice for one password and creates the Ergo account
 first. It creates the Lounge user only after Ergo confirms success. Passwords
 are the same initially; later password changes in either application do not

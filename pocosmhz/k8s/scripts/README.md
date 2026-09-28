@@ -27,10 +27,12 @@ From `pocosmhz/k8s`, run:
 ./scripts/list-chat-user.sh
 ```
 
-The list script shows Ergo's registered nicknames and The Lounge's web users in
-separate sections. This deployment forces an authenticated IRC nickname to
-equal its account name and permits no additional grouped nicknames, so the
-Ergo list represents the current account names. See Ergo's [NickServ LIST
+Ergo and The Lounge maintain separate user lists. The add and delete scripts
+try to update both, but a partial failure or a manual change can leave them
+different. The list script reads each service independently and does not
+reconcile them. This deployment forces an authenticated IRC nickname to equal
+its account name and permits no additional grouped nicknames, so the Ergo
+section represents the current account names. See Ergo's [NickServ LIST
 implementation](https://github.com/ergochat/ergo/blob/v2.19.1/irc/nickserv.go)
 and [The Lounge user documentation](https://thelounge.chat/docs/users).
 
