@@ -215,8 +215,8 @@ for BitchX's fields would split that value before it reaches Ergo.
 The Lounge is the web client for the IRC network. Its chart creates the HTTPS
 Ingress and stores user settings and scrollback on a separate RBD volume. The
 configuration sets `public: false`, so visitors see a login page and cannot
-create their own accounts. It also locks the IRC network address and TLS
-settings to the configured Ergo service.
+create their own accounts. The configured Ergo service remains the default IRC
+network, while users can enter other servers when adding a network.
 
 The account script above creates a web account at the same time as the Ergo
 account. To create one manually after the Deployment is ready:

@@ -11,7 +11,7 @@ data:
       reverseProxy: true,
       prefetch: true,
       prefetchStorage: true,
-      lockNetwork: true,
+      lockNetwork: false,
       messageStorage: ["sqlite"],
       storagePolicy: {
         enabled: true,
