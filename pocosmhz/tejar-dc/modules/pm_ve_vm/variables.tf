@@ -98,16 +98,19 @@ variable "ha_group" {
   default     = null
 }
 
-variable "hosts" {
-  description = "List of hosts for sshpiperd to provide access to"
-  type = list(object({
-    name    = string
-    ip      = string
-    ssh_key = string
-  }))
+variable "parameters" {
+  description = "Generic parameters object for custom VM configuration"
+  type        = any
+  default     = {}
 }
-variable "sshpiper_version" {
-  description = "Version of SSHPiper to be used"
+
+variable "user_data_template" {
+  description = "Template file path for user-data cloud-config"
   type        = string
-  default     = "1.5.3"
+}
+
+variable "packages" {
+  description = "List of packages to be installed on the VM"
+  type        = list(string)
+  default     = []
 }

@@ -1,0 +1,44 @@
+#cloud-config
+%{~ if need_gnupg }
+# This is for installing gnupg first, then the rest:
+bootcmd:
+  - DEBIAN_FRONTEND=noninteractive apt-get -yq update
+  - DEBIAN_FRONTEND=noninteractive apt-get -yq install gnupg
+%{~ endif }
+manage_etc_hosts: true
+timezone: ${ timezone }
+users:
+  - name: root
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ root_ssh_key }
+  - name: sshpiper
+    shell: /bin/nologin
+    system: true
+    homedir: /nonexistent
+    no_create_home: true
+%{~ for user in admin_users }
+  - name: ${ user.name }
+    gecos: ${ user.gecos }
+    groups:
+      - sudo
+      - users
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ user.ssh_key }
+    sudo: ALL=(ALL) NOPASSWD:ALL
+%{~ endfor }
+package_update: true
+packages:
+  - qemu-guest-agent
+write_files:
+  # Install packages
+  - path: /run/scripts/install-packages.sh
+    content: |
+      #!/bin/sh
+      DEBIAN_FRONTEND=noninteractive apt-get -yq install ${ join(" ", packages) }
+    permissions: '0750'
+runcmd:
+  - systemctl --now enable qemu-guest-agent
+  - sh /run/scripts/install-packages.sh
+  - echo "done" > /tmp/cloud-config.done

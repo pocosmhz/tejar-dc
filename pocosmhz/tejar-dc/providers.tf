@@ -3,14 +3,14 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.78.2"
+      version = "0.106.0"
     }
     tls = {
-      source  = "hashicorp/tls"
-      version = "4.1.0"
+      source  = "opentofu/tls"
+      version = "4.2.1"
     }
     time = {
-      source  = "hashicorp/time"
+      source  = "opentofu/time"
       version = "0.13.1"
     }
   }

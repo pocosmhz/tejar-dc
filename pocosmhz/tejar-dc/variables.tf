@@ -66,7 +66,7 @@ variable "proxmox_vm_default_images" {
     }
     debian13 = {
       url       = "https://cloud.debian.org/images/cloud/trixie/daily/latest/debian-13-genericcloud-amd64-daily.qcow2"
-      file_name = "debian-12-genericcloud-amd64.img"
+      file_name = "debian-13-genericcloud-amd64.img"
     }
   }
 }
@@ -162,6 +162,35 @@ variable "proxmox_jump_host" {
     hostname   = "jh01"
     ip_address = "192.168.1.4/24"
     ip_gateway = "192.168.1.1"
+  }
+}
+
+# Standalone host list
+variable "proxmox_standalone_hosts" {
+  description = "List of standalone hosts to create"
+  type = map(object({
+    node          = string
+    ip_address    = string
+    ip_gateway    = string
+    cpu_cores     = number
+    memory        = number
+    disk_size     = number
+    template_name = string
+    image_id      = optional(string, null)
+    packages      = optional(list(string), [])
+    tags          = optional(list(string), [])
+  }))
+  default = {
+    linux01 = {
+      node          = "pve02"
+      ip_address    = "192.168.1.6/24"
+      ip_gateway    = "192.168.1.1"
+      cpu_cores     = 2
+      memory        = 2048
+      disk_size     = 20
+      template_name = "debian12"
+      image_id      = "local:iso/debian-13-genericcloud-amd64.img"
+    }
   }
 }
 
@@ -299,6 +328,19 @@ variable "proxmox_k8s_clusters" {
           disk_size  = 20
         }
       }
+    }
+  }
+}
+
+# On-premises host list
+variable "onprem_standalone_hosts" {
+  description = "List of on-premises hosts to allow access to"
+  type = map(object({
+    ip_address = string
+  }))
+  default = {
+    linux01 = {
+      ip_address = "192.168.1.6/24"
     }
   }
 }

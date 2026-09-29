@@ -72,7 +72,7 @@ resource "helm_release" "external_dns" {
   name       = "external-dns"
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "external-dns"
-  version    = "8.9.2"
+  version    = "9.0.3"
   namespace  = kubernetes_namespace.external_dns.id
   values = [
     templatefile("${path.module}/source/helm/external-dns/external-dns-values.tpl.yml", {

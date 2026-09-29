@@ -1,0 +1,176 @@
+# Forgejo chart 17.1.4, using its tested Forgejo 15.0.6 LTS release.
+# The image index digest makes the rootless application image immutable.
+image:
+  registry: code.forgejo.org
+  repository: forgejo/forgejo
+  tag: "15.0.6"
+  digest: "sha256:90a7b5b335dd84dbed7f031f2721ae877c713a9226a2b246bc0ed7e1fc7dd9ec"
+  pullPolicy: IfNotPresent
+  rootless: true
+
+replicaCount: 1
+
+# The shared SQLite/PVC deployment cannot safely use a rolling update.
+strategy:
+  type: Recreate
+
+podSecurityContext:
+  fsGroup: 1000
+  fsGroupChangePolicy: OnRootMismatch
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+serviceAccount:
+  create: true
+  automountServiceAccountToken: false
+
+service:
+  http:
+    type: ClusterIP
+    port: 3000
+  ssh:
+    type: ClusterIP
+    port: 22
+
+ingress:
+  enabled: true
+  className: "${forgejo_conf.ingress_class}"
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "${forgejo_conf.domain}"
+    external-dns.alpha.kubernetes.io/ttl: "300"
+%{ if can(forgejo_conf.target) && forgejo_conf.target != "" }
+    external-dns.alpha.kubernetes.io/target: "${forgejo_conf.target}"
+%{ endif }
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "1g"
+  hosts:
+    - host: "${forgejo_conf.domain}"
+      paths:
+        - path: /
+          pathType: Prefix
+          port: http
+  tls:
+    - secretName: forgejo-tls
+      hosts:
+        - "${forgejo_conf.domain}"
+
+resources:
+  limits:
+    cpu: "1"
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+initContainers:
+  resources:
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+persistence:
+  enabled: true
+  create: true
+  mount: true
+  claimName: forgejo-shared-storage
+  size: "${forgejo_conf.storage_size}"
+  accessModes:
+    - ReadWriteOnce
+  storageClass: "${forgejo_conf.storage_class}"
+  annotations:
+    helm.sh/resource-policy: keep
+
+gitea:
+  admin:
+    username: "${forgejo_conf.admin_username}"
+    email: "${forgejo_conf.admin_email}"
+    # The chart generates and preserves a 30-character password in its Secret.
+    passwordMode: initialOnlyRequireReset
+
+  metrics:
+    enabled: false
+    serviceMonitor:
+      enabled: false
+
+  config:
+    APP_NAME: "Forgejo"
+    RUN_MODE: prod
+    server:
+      SSH_PORT: 22
+      SSH_LISTEN_PORT: 2222
+      ENABLE_PPROF: false
+    service:
+      DISABLE_REGISTRATION: true
+      ENABLE_REVERSE_PROXY_AUTHENTICATION: false
+    security:
+      DISABLE_GIT_HOOKS: true
+      IMPORT_LOCAL_PATHS: false
+      GLOBAL_TWO_FACTOR_REQUIREMENT: admin
+      MIN_PASSWORD_LENGTH: 14
+      PASSWORD_COMPLEXITY: "lower,upper,digit,spec"
+      DISABLE_QUERY_AUTH_TOKEN: true
+      REVERSE_PROXY_LIMIT: 1
+      REVERSE_PROXY_TRUSTED_PROXIES: "172.20.0.0/16"
+    openid:
+      ENABLE_OPENID_SIGNIN: false
+      ENABLE_OPENID_SIGNUP: false
+    migrations:
+      ALLOW_LOCALNETWORKS: false
+      SKIP_TLS_VERIFY: false
+    webhook:
+      ALLOWED_HOST_LIST: external
+      SKIP_TLS_VERIFY: false
+    api:
+      ENABLE_SWAGGER: false
+    oauth2:
+      ENABLED: false
+    federation:
+      ENABLED: false
+    actions:
+      ENABLED: false
+
+  livenessProbe:
+    enabled: true
+    tcpSocket:
+      port: http
+    initialDelaySeconds: 60
+    timeoutSeconds: 2
+    periodSeconds: 10
+    failureThreshold: 6
+
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /api/healthz
+      port: http
+    initialDelaySeconds: 5
+    timeoutSeconds: 2
+    periodSeconds: 10
+    failureThreshold: 3
+
+  startupProbe:
+    enabled: true
+    tcpSocket:
+      port: http
+    initialDelaySeconds: 5
+    timeoutSeconds: 2
+    periodSeconds: 5
+    failureThreshold: 60
+
+test:
+  enabled: false

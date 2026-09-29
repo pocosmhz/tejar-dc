@@ -77,6 +77,15 @@ variable "k8s_clusters" {
       pg_password         = optional(string, "pg_password")
       pg_resource_preset  = optional(string, "micro")
     }))
+    forgejo = optional(object({
+      ingress_class  = optional(string, "nginx")
+      target         = optional(string, "")
+      domain         = optional(string, "forgejo.k8s.example.com")
+      admin_username = optional(string, "forgejo_admin")
+      admin_email    = optional(string, "forgejo@local.domain")
+      storage_class  = optional(string, "csi-rbd-sc")
+      storage_size   = optional(string, "10Gi")
+    }))
     opensearch = optional(object({
       ca_common_name         = optional(string, "example.int")
       initial_admin_password = string
@@ -214,6 +223,15 @@ variable "k8s_clusters" {
         postgresql_ha       = false
         pg_password         = "pg_password"
         pg_resource_preset  = "micro"
+      }
+      forgejo = {
+        ingress_class  = "nginx"
+        target         = "external01.example.com"
+        domain         = "forgejo.example.com"
+        admin_username = "forgejo_admin"
+        admin_email    = "forgejo@example.com"
+        storage_class  = "csi-rbd-sc"
+        storage_size   = "10Gi"
       }
       opensearch = {
         ca_common_name         = "example.int"

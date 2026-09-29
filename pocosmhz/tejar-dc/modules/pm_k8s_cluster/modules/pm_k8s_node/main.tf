@@ -109,8 +109,10 @@ resource "proxmox_virtual_environment_vm" "vm" {
 }
 
 resource "proxmox_virtual_environment_haresource" "hares" {
+  for_each = var.ha_group != null ? { "enabled" = var.ha_group } : {}
+
   resource_id = "vm:${proxmox_virtual_environment_vm.vm.id}"
   state       = "started"
-  group       = var.ha_group
+  group       = each.value
   comment     = "Managed by Terraform"
 }
