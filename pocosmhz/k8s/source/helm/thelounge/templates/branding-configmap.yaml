@@ -1,0 +1,26 @@
+{{- if or .Values.branding.enabled .Values.branding.stylesheet }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thelounge-branding
+data:
+{{- if .Values.branding.enabled }}
+  logo.svg: |
+{{ required "branding.logoFile is required when branding is enabled" (.Files.Get .Values.branding.logoFile) | indent 4 }}
+  logo-grey-bg.svg: |
+{{ .Files.Get "files/icons/logo-grey-bg.svg" | indent 4 }}
+  icon-black-transparent-bg.svg: |
+{{ .Files.Get "files/icons/icon-black-transparent-bg.svg" | indent 4 }}
+{{- end }}
+{{- if .Values.branding.stylesheet }}
+  default.css: |
+{{ .Files.Get "files/thelounge-default.css" | indent 4 }}
+{{ .Values.branding.stylesheet | indent 4 }}
+{{- end }}
+{{- if .Values.branding.enabled }}
+binaryData:
+{{- range list "favicon.ico" "favicon-alerted.ico" "logo-grey-bg-120x120px.png" "logo-grey-bg-152x152px.png" "logo-grey-bg-167x167px.png" "logo-grey-bg-180x180px.png" "logo-grey-bg-192x192px.png" "logo-grey-bg-512x512px.png" }}
+  {{ . }}: {{ $.Files.Get (printf "files/icons/%s" .) | b64enc | quote }}
+{{- end }}
+{{- end }}
+{{- end }}

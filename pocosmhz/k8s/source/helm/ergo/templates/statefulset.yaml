@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ergo
+spec:
+  serviceName: ergo
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ergo
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ergo
+      annotations:
+        checksum/config: {{ tpl (.Files.Get "files/ircd.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      shareProcessNamespace: true
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: ergo
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          command: ["/ircd-bin/ergo"]
+          args: ["run", "--conf", "/etc/ergo/ircd.yaml"]
+          workingDir: /ircd
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
+          ports:
+            - name: ircs
+              containerPort: 6697
+          startupProbe:
+            tcpSocket:
+              port: ircs
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            tcpSocket:
+              port: ircs
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: ircs
+            periodSeconds: 30
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /ircd
+            - name: config
+              mountPath: /etc/ergo
+              readOnly: true
+            - name: tls
+              mountPath: /etc/ergo/tls
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+        # Kubernetes refreshes mounted Secrets; Ergo needs SIGHUP to load new keys.
+        - name: certificate-reloader
+          image: busybox:1.36.1
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              previous="$(sha256sum /tls/tls.crt /tls/tls.key)"
+              while sleep 60; do
+                current="$(sha256sum /tls/tls.crt /tls/tls.key)"
+                if [ "$current" != "$previous" ]; then
+                  previous="$current"
+                  for pid in $(pidof ergo); do kill -HUP "$pid"; done
+                fi
+              done
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: 5m
+              memory: 8Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+          volumeMounts:
+            - name: tls
+              mountPath: /tls
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: ergo-config
+        - name: tls
+          secret:
+            secretName: {{ .Values.tlsSecretName }}
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: {{ .Values.storageClass }}
+        resources:
+          requests:
+            storage: {{ .Values.storageSize }}

@@ -36,6 +36,7 @@ resource "helm_release" "ingress_nginx" {
   values = [
     templatefile("${path.module}/source/helm/nginx/nginx-ingress-values.tpl.yml", {
       nginx_conf = var.k8s_clusters["onprem01"].nginx
+      irc_conf   = var.k8s_clusters["onprem01"].irc
     })
   ]
 }

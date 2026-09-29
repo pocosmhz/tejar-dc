@@ -1,0 +1,7 @@
+ircHost: ${jsonencode(irc_conf.irc_domain)}
+ircServiceIP: ${jsonencode(irc_service_ip)}
+chatHost: ${jsonencode(irc_conf.chat_domain)}
+networkName: ${jsonencode(irc_conf.network_name)}
+ingressClass: ${jsonencode(irc_conf.ingress_class)}
+storageClass: ${jsonencode(irc_conf.storage_class)}
+storageSize: ${jsonencode(irc_conf.lounge_storage_size)}

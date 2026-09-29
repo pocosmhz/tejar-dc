@@ -1,0 +1,26 @@
+image:
+  repository: ghcr.io/thelounge/thelounge
+  tag: 4.5.2
+
+ircHost: irc.k8s.example.com
+ircServiceIP: ""
+chatHost: chat.k8s.example.com
+networkName: ExampleIRC
+ingressClass: nginx
+tlsSecretName: thelounge-https-tls
+storageClass: csi-rbd-sc
+storageSize: 10Gi
+
+branding:
+  enabled: true
+  logoFile: files/pocosmhz_white.svg
+  # CSS appended to The Lounge's default theme when provided.
+  stylesheet: ""
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi

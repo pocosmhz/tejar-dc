@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ergo-config
+data:
+  ircd.yaml: |
+{{ tpl (.Files.Get "files/ircd.yaml") . | indent 4 }}
+  ergo.motd: |
+    Welcome to {{ .Values.networkName }} IRC.

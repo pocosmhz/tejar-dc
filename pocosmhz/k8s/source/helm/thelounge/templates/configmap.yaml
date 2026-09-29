@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thelounge-config
+data:
+  config.js: |
+    module.exports = {
+      public: false,
+      host: "0.0.0.0",
+      port: 9000,
+      reverseProxy: true,
+      prefetch: true,
+      prefetchStorage: true,
+      lockNetwork: false,
+      messageStorage: ["sqlite"],
+      storagePolicy: {
+        enabled: true,
+        maxAgeDays: 7,
+        deletionPolicy: "everything",
+      },
+      defaults: {
+        name: {{ .Values.networkName | quote }},
+        host: {{ .Values.ircHost | quote }},
+        port: 6697,
+        tls: true,
+        rejectUnauthorized: true,
+        nick: "guest%%",
+        username: "thelounge",
+        realname: "The Lounge User",
+        join: "",
+      },
+    };
