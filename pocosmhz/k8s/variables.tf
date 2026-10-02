@@ -66,17 +66,6 @@ variable "k8s_clusters" {
       })
       ingress_class = optional(string, "nginx")
     }))
-    gitea = optional(object({
-      ingress_class       = optional(string, "nginx")
-      target              = optional(string, "")
-      load_balancer_class = optional(string, "kube-vip.io/kube-vip-class")
-      load_balancer_ip    = optional(string, "")
-      domain              = optional(string, "gitea.k8s.example.com")
-      admin_password      = optional(string, "")
-      postgresql_ha       = optional(bool, false)
-      pg_password         = optional(string, "pg_password")
-      pg_resource_preset  = optional(string, "micro")
-    }))
     forgejo = optional(object({
       ingress_class  = optional(string, "nginx")
       target         = optional(string, "")
@@ -194,17 +183,6 @@ variable "k8s_clusters" {
           server = "https://acme-v02.api.letsencrypt.org/directory"
         }
         ingress_class = "nginx"
-      }
-      gitea = {
-        ingress_class       = "nginx"
-        target              = "external01.example.com"
-        load_balancer_class = "kube-vip.io/kube-vip-class"
-        load_balancer_ip    = "192.168.1.100"
-        domain              = "gitea.example.com"
-        admin_password      = "r8sA8CPHD9!bt6d"
-        postgresql_ha       = false
-        pg_password         = "pg_password"
-        pg_resource_preset  = "micro"
       }
       forgejo = {
         ingress_class  = "nginx"
