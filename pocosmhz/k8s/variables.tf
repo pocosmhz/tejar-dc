@@ -96,6 +96,27 @@ variable "k8s_clusters" {
       ergo_storage_size   = optional(string, "10Gi")
       lounge_storage_size = optional(string, "10Gi")
     }))
+    elasticsearch = optional(object({
+      clusters = map(object({
+        version = optional(string, "8.19.22")
+        node_sets = list(object({
+          name      = string
+          replicas  = number
+          disk_size = string
+          resources = object({
+            requests = object({
+              cpu    = string
+              memory = string
+            })
+            limits = object({
+              cpu    = string
+              memory = string
+            })
+          })
+          roles = list(string)
+        }))
+      }))
+    }))
   }))
   default = {
     k8s01 = {
@@ -203,6 +224,31 @@ variable "k8s_clusters" {
         storage_class       = "csi-rbd-sc"
         ergo_storage_size   = "10Gi"
         lounge_storage_size = "10Gi"
+      }
+      elasticsearch = {
+        clusters = {
+          es01 = {
+            version = "8.19.22"
+            node_sets = [
+              {
+                name      = "default"
+                replicas  = 2
+                disk_size = "20Gi"
+                resources = {
+                  requests = {
+                    cpu    = "1"
+                    memory = "2Gi"
+                  }
+                  limits = {
+                    cpu    = "1"
+                    memory = "2Gi"
+                  }
+                }
+                roles = ["master", "data", "ingest", "ml", "remote_cluster_client", "transform"]
+              }
+            ]
+          }
+        }
       }
     }
   }
