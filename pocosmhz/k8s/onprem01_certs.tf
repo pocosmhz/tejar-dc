@@ -7,7 +7,7 @@ resource "kubernetes_namespace" "cert_manager" {
 }
 
 data "http" "cert_manager_crds" {
-  url = "https://github.com/cert-manager/cert-manager/releases/download/v1.18.2/cert-manager.crds.yaml"
+  url = "https://github.com/cert-manager/cert-manager/releases/download/v1.21.2/cert-manager.crds.yaml"
 }
 
 # The following brilliant solution was taken from:
@@ -29,7 +29,7 @@ resource "helm_release" "cert_manager" {
   name       = "cert-manager"
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
-  version    = "1.18.2"
+  version    = "1.21.2"
   namespace  = kubernetes_namespace.cert_manager.id
   values = [
     templatefile("${path.module}/source/helm/cert-manager/cert-manager-values.tpl.yml", {

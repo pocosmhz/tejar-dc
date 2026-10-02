@@ -47,6 +47,34 @@ Also, in order to get access to source IP address you must enable `use_proxy_pro
 
 And also, use the [unofficial solution](https://hub.docker.com/r/shilazi/kube-vip) suggested [here](https://github.com/kube-vip/kube-vip/issues/1027#issuecomment-2750374646).
 
+## cert-manager
+
+The cert-manager CRDs are managed by `kubernetes_manifest` in
+`onprem01_certs.tf`, separately from the Helm release. Keep `crds.enabled`
+false in `source/helm/cert-manager/cert-manager-values.tpl.yml` so Helm does
+not take ownership of them.
+
+For future upgrades:
+
+1. Check the [supported releases](https://cert-manager.io/docs/releases/),
+   [upgrade instructions](https://cert-manager.io/docs/installation/upgrade/),
+   and release notes for every minor version between the installed and target
+   versions. Upgrade one minor version at a time, using its latest patch.
+2. Back up the cert-manager custom resources, the ACME account Secret in the
+   `cert-manager` namespace, and the TLS Secrets used by existing Certificates.
+   Store these backups privately because the Secret exports contain key material.
+3. For each version, update both the CRD download URL and Helm chart version in
+   `onprem01_certs.tf`. Compare the old and new CRD names. Existing CRDs should
+   update in place; do not delete them, since doing so also deletes their
+   custom resources.
+4. Run `tofu plan -target=helm_release.cert_manager -out=/tmp/cert-manager.tfplan`.
+   Check that it updates the CRDs and Helm release without replacing or
+   destroying CRDs, then run `tofu apply /tmp/cert-manager.tfplan`. The Helm
+   release depends on the CRDs, so they are updated first.
+5. After each step, confirm the controller, webhook, and cainjector Deployments
+   have rolled out and the ClusterIssuer and Certificates remain Ready. Run a
+   full `tofu plan` after the final step to check for remaining changes.
+
 ## Ergo IRC
 
 The `irc` namespace runs Ergo with TLS on port 6697. Its hostname, network name,
