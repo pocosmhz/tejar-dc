@@ -64,9 +64,11 @@ For future upgrades:
    `cert-manager` namespace, and the TLS Secrets used by existing Certificates.
    Store these backups privately because the Secret exports contain key material.
 3. For each version, update both the CRD download URL and Helm chart version in
-   `onprem01_certs.tf`. Compare the old and new CRD names. Existing CRDs should
-   update in place; do not delete them, since doing so also deletes their
-   custom resources.
+   `onprem01_certs.tf`. Replace the values template with that version's complete
+   chart `values.yaml`, retaining its comments, then reapply the local namespace
+   and `prometheus_enabled` template substitutions. Compare the old and new CRD
+   names. Existing CRDs should update in place; do not delete them, since doing
+   so also deletes their custom resources.
 4. Run `tofu plan -target=helm_release.cert_manager -out=/tmp/cert-manager.tfplan`.
    Check that it updates the CRDs and Helm release without replacing or
    destroying CRDs, then run `tofu apply /tmp/cert-manager.tfplan`. The Helm
