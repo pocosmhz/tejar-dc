@@ -202,9 +202,9 @@ In order to compile and use BitchX in 2026 under Debian 13 you can follow these 
     ```
 
 7. Use it:
-```Shell
-$ BitchX -ssl -n myuser 'irc.example.com,6697,myuser:mypassword'
-```
+    ```Shell
+    $ BitchX -ssl -n myuser 'irc.example.com,6697,myuser:mypassword'
+    ```
 
 BitchX uses commas to separate the server, port, and server-password fields
 here. Ergo expects the server password in `account:password` form; using colons
