@@ -81,6 +81,32 @@ old controller's LoadBalancer address before assigning it to the replacement.
 Verify public access and issuance before uninstalling the old release. Existing
 IRC connections may reconnect during the handover.
 
+## Prometheus stack
+
+`onprem01_prometheus.tf` pins kube-prometheus-stack chart 91.9.0, including
+Prometheus 3.15.0, Prometheus Operator 0.94.1, and Grafana 13.2.3. The full
+upstream chart values remain in
+`source/helm/prometheus/kube-prometheus-stack-values.tpl.yml`, with the
+`prom_conf` variables supplying Grafana credentials, ingress and persistence
+settings, and Prometheus storage size. Grafana and Prometheus retain their
+existing Ceph RBD volumes; Grafana uses a StatefulSet.
+
+The chart's `crds.upgradeJob` runs before upgrades to apply the matching
+Operator CRDs with server-side apply. `forceConflicts` allows the hook to own
+schema fields originally installed by the OpenTofu Helm provider. Do not delete
+CRDs during upgrades, because that also deletes their monitoring resources.
+
+The migration from chart 75.10.0 was performed through chart 83.7.0 / Grafana
+12.4.3, updating installed plugins before moving to Grafana 13. The supplied
+Prometheus overview dashboard changed UID; its obsolete duplicate registration
+was cleaned through file provisioning and the current dashboard reprovisioned.
+Back up the Grafana database and plugins and review the
+[stack upgrade notes](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/UPGRADE.md)
+and [Grafana upgrade guide](https://grafana.com/docs/grafana/latest/upgrade-guide/)
+before future upgrades. The new chart uses distroless images and authenticates
+control-plane scrapes through its service-account token Secret and the
+`kube-root-ca.crt` ConfigMap, replacing filesystem token and CA references.
+
 ## cert-manager
 
 The cert-manager CRDs are managed by `kubernetes_manifest` in
