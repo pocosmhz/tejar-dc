@@ -12,7 +12,7 @@ resource "helm_release" "kube_vip" {
   name       = "kube-vip"
   repository = "https://kube-vip.github.io/helm-charts"
   chart      = "kube-vip"
-  version    = "0.6.6"
+  version    = "0.11.1"
   namespace  = kubernetes_namespace.kube_vip_system.id
   values = [
     templatefile("${path.module}/source/helm/kube-vip/kube-vip-values.tpl.yml", {

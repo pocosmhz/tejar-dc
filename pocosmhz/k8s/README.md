@@ -33,6 +33,17 @@ Make sure the selected credentials have permissions to access every project list
 
 See https://cloud.google.com/docs/authentication/external/set-up-adc for more information
 
+## kube-vip
+
+kube-vip uses Helm chart 0.11.1 with the container image explicitly pinned to
+`ghcr.io/kube-vip/kube-vip:v1.2.4` in
+`source/helm/kube-vip/kube-vip-values.tpl.yml`, overriding the chart's default
+v1.2.3 image. This includes the fix for
+[endpoint watch recovery (#1685)](https://github.com/kube-vip/kube-vip/issues/1685):
+a terminal watch error could stop watching endpoints and remove the Service VIP
+without recovering. Review this image pin alongside the chart's default image
+and release notes during future upgrades.
+
 ## Traefik ingress settings
 
 Traefik chart 41.6.1 runs in the `traefik` namespace, using the configured
