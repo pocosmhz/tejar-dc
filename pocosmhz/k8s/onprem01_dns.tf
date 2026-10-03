@@ -51,16 +51,16 @@ resource "google_service_account_key" "external_dns_sa_key" {
 }
 
 # external-dns service configuration
-resource "kubernetes_namespace" "external_dns" {
+resource "kubernetes_namespace_v1" "external_dns" {
   metadata {
     name = "external-dns"
   }
 }
 
-resource "kubernetes_secret" "external_dns_sa_key" {
+resource "kubernetes_secret_v1" "external_dns_sa_key" {
   metadata {
     name      = "external-dns-sa-key"
-    namespace = kubernetes_namespace.external_dns.id
+    namespace = kubernetes_namespace_v1.external_dns.id
   }
   data = {
     "credentials.json" = base64decode(google_service_account_key.external_dns_sa_key.private_key)
@@ -73,12 +73,12 @@ resource "helm_release" "external_dns" {
   repository = "https://kubernetes-sigs.github.io/external-dns/"
   chart      = "external-dns"
   version    = "1.23.0"
-  namespace  = kubernetes_namespace.external_dns.id
+  namespace  = kubernetes_namespace_v1.external_dns.id
   values = [
     templatefile("${path.module}/source/helm/external-dns/external-dns-values.tpl.yml", {
       provider             = "google"
       google_project       = var.k8s_clusters["onprem01"].providers.gcp.project
-      google_sa_secret     = kubernetes_secret.external_dns_sa_key.metadata[0].name
+      google_sa_secret     = kubernetes_secret_v1.external_dns_sa_key.metadata[0].name
       google_sa_secret_key = "credentials.json"
       txtowner_id          = "default"
       policy               = "sync"
@@ -105,7 +105,7 @@ resource "helm_release" "external_dns" {
 resource "kubernetes_network_policy_v1" "external_dns" {
   metadata {
     name      = "external-dns-access"
-    namespace = kubernetes_namespace.external_dns.id
+    namespace = kubernetes_namespace_v1.external_dns.id
   }
   spec {
     pod_selector {
@@ -130,7 +130,7 @@ resource "kubernetes_network_policy_v1" "external_dns" {
 resource "kubernetes_pod_disruption_budget_v1" "external_dns" {
   metadata {
     name      = "external-dns-availability"
-    namespace = kubernetes_namespace.external_dns.id
+    namespace = kubernetes_namespace_v1.external_dns.id
   }
   spec {
     max_unavailable = "1"

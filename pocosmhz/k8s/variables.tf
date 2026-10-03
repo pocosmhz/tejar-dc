@@ -71,7 +71,7 @@ variable "k8s_clusters" {
       target         = optional(string, "")
       domain         = optional(string, "forgejo.k8s.example.com")
       admin_username = optional(string, "forgejo_admin")
-      admin_email    = optional(string, "forgejo@local.domain")
+      admin_email    = optional(string, "forgejo@example.com")
       storage_class  = optional(string, "csi-rbd-sc")
       storage_size   = optional(string, "10Gi")
     }))
@@ -88,6 +88,23 @@ variable "k8s_clusters" {
     elasticsearch = optional(object({
       clusters = map(object({
         version = optional(string, "8.19.22")
+        # Omit kibana to deploy Elasticsearch alone. Kibana shares its version.
+        kibana = optional(object({
+          domain        = string
+          target        = optional(string, "")
+          ingress_class = optional(string, "traefik")
+          replicas      = optional(number, 1)
+          resources = optional(object({
+            requests = optional(object({
+              cpu    = optional(string, "250m")
+              memory = optional(string, "1Gi")
+            }), {})
+            limits = optional(object({
+              cpu    = optional(string, "1")
+              memory = optional(string, "2Gi")
+            }), {})
+          }), {})
+        }))
         node_sets = list(object({
           name      = string
           replicas  = number
@@ -108,7 +125,8 @@ variable "k8s_clusters" {
     }))
   }))
   default = {
-    k8s01 = {
+    # Example configuration only: replace credentials, addresses and domains.
+    onprem01 = {
       providers = {
         gcp = {
           project = "my-gcp-project"
@@ -117,11 +135,11 @@ variable "k8s_clusters" {
         }
       }
       nodes = {
-        k8s01cp01 = {
+        onprem01cp01 = {
           ip_address = "192.168.1.5"
           ip_gateway = "192.168.1.1"
         }
-        k8s01cp02 = {
+        onprem01cp02 = {
           ip_address = "192.168.1.6"
           ip_gateway = "192.168.1.1"
         }
@@ -144,6 +162,7 @@ variable "k8s_clusters" {
       traefik = {
         kind                    = "Deployment"
         external_traffic_policy = "Cluster"
+        service_type            = "LoadBalancer"
         load_balancer_class     = "kube-vip.io/kube-vip-class"
         load_balancer_ip        = "192.168.1.100"
       }
@@ -159,7 +178,7 @@ variable "k8s_clusters" {
             domain  = "grafana.k8s.example.com"
             target  = "external01.example.com"
           }
-          password = "prom-operator"
+          password = "example-grafana-password"
           persistence = {
             enabled      = true
             storage_size = "10Gi"
@@ -179,14 +198,14 @@ variable "k8s_clusters" {
       cert_manager = {
         acme = {
           email  = "email@example.com"
-          server = "https://acme-v02.api.letsencrypt.org/directory"
+          server = "https://acme-staging-v02.api.letsencrypt.org/directory"
         }
         ingress_class = "traefik"
       }
       forgejo = {
         ingress_class  = "traefik"
         target         = "external01.example.com"
-        domain         = "forgejo.example.com"
+        domain         = "forgejo.k8s.example.com"
         admin_username = "forgejo_admin"
         admin_email    = "forgejo@example.com"
         storage_class  = "csi-rbd-sc"
@@ -206,6 +225,16 @@ variable "k8s_clusters" {
         clusters = {
           es01 = {
             version = "8.19.22"
+            kibana = {
+              domain        = "kibana.k8s.example.com"
+              target        = "external01.example.com"
+              ingress_class = "traefik"
+              replicas      = 1
+              resources = {
+                requests = { cpu = "250m", memory = "1Gi" }
+                limits   = { cpu = "1", memory = "2Gi" }
+              }
+            }
             node_sets = [
               {
                 name      = "default"

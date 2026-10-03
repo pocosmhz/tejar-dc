@@ -168,6 +168,21 @@ For future upgrades:
    have rolled out and the ClusterIssuer and Certificates remain Ready. Run a
    full `tofu plan` after the final step to check for remaining changes.
 
+## Elasticsearch and Kibana
+
+ECK operator 3.5.0 manages Elasticsearch `es01` and Kibana in the
+`elastic-system` namespace. Both run version 8.19.22; Kibana inherits the
+Elasticsearch version and is enabled by the optional `kibana` object under
+`elasticsearch.clusters.es01`. Access Kibana at
+[kibana.k8s.example.com](https://kibana.k8s.example.com). The administrator
+username is `elastic`, with the same password for Elasticsearch and Kibana.
+With `kubectl` configured for `onprem01`, retrieve it from ECK's Secret:
+
+```sh
+kubectl -n elastic-system get secret es01-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d
+printf '\n'
+```
+
 ## Ergo IRC
 
 The `irc` namespace runs Ergo with TLS on port 6697. Its hostname, network name,

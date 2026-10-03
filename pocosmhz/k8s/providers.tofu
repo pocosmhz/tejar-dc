@@ -3,22 +3,22 @@ terraform {
   required_providers {
     kubernetes = {
       source  = "opentofu/kubernetes"
-      version = "2.37.1"
+      version = "3.3.0"
     }
     helm = {
       source  = "opentofu/helm"
-      version = "3.0.2"
+      version = "3.3.0"
     }
     http = {
       source  = "opentofu/http"
-      version = "3.5.0"
+      version = "3.6.2"
     }
     google = {
       source  = "opentofu/google"
-      version = "6.43.0"
+      version = "8.5.0"
     }
     random = {
-      source  = "hashicorp/random"
+      source  = "opentofu/random"
       version = "3.9.1"
     }
   }

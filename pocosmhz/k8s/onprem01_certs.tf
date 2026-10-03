@@ -1,6 +1,6 @@
 # Certificate management
 # 1. cert-manager
-resource "kubernetes_namespace" "cert_manager" {
+resource "kubernetes_namespace_v1" "cert_manager" {
   metadata {
     name = "cert-manager"
   }
@@ -30,10 +30,10 @@ resource "helm_release" "cert_manager" {
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
   version    = "1.21.2"
-  namespace  = kubernetes_namespace.cert_manager.id
+  namespace  = kubernetes_namespace_v1.cert_manager.id
   values = [
     templatefile("${path.module}/source/helm/cert-manager/cert-manager-values.tpl.yml", {
-      namespace          = kubernetes_namespace.cert_manager.id
+      namespace          = kubernetes_namespace_v1.cert_manager.id
       prometheus_enabled = false # Set to true if you want to enable Prometheus monitoring and have fixed the errors ... ;-)
     })
   ]

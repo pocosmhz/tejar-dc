@@ -1,6 +1,6 @@
 # Helm installs Traefik's CRDs before these extraObjects. Keeping custom
 # resources in the release avoids OpenTofu's plan-time CRD discovery problem.
-resource "kubernetes_namespace" "traefik" {
+resource "kubernetes_namespace_v1" "traefik" {
   metadata {
     name = "traefik"
   }
@@ -11,7 +11,7 @@ resource "helm_release" "traefik" {
   repository = "https://traefik.github.io/charts"
   chart      = "traefik"
   version    = "41.6.1"
-  namespace  = kubernetes_namespace.traefik.id
+  namespace  = kubernetes_namespace_v1.traefik.id
 
   atomic          = true
   cleanup_on_fail = true
@@ -30,7 +30,7 @@ resource "helm_release" "traefik" {
           kind       = "IngressRouteTCP"
           metadata = {
             name      = "ergo"
-            namespace = kubernetes_namespace.irc.id
+            namespace = kubernetes_namespace_v1.irc.id
           }
           spec = {
             ingressClassName = "traefik"
@@ -48,7 +48,7 @@ resource "helm_release" "traefik" {
           kind       = "Middleware"
           metadata = {
             name      = "upload-limit"
-            namespace = kubernetes_namespace.forgejo.id
+            namespace = kubernetes_namespace_v1.forgejo.id
           }
           spec = {
             buffering = {
