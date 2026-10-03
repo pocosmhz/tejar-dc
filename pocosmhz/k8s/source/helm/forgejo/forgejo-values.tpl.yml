@@ -53,8 +53,7 @@ ingress:
     external-dns.alpha.kubernetes.io/target: "${forgejo_conf.target}"
 %{ endif }
     cert-manager.io/cluster-issuer: letsencrypt
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "1g"
+    traefik.ingress.kubernetes.io/router.middlewares: forgejo-upload-limit@kubernetescrd
   hosts:
     - host: "${forgejo_conf.domain}"
       paths:

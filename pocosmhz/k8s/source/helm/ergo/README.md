@@ -70,4 +70,4 @@ password in The Lounge too.
 The Ergo TLS Secret is mounted as a normal Kubernetes Secret volume. A small
 sidecar detects renewed certificate/key content and sends Ergo `SIGHUP` so new
 connections use the renewed certificate. The Lounge HTTPS certificate is used
-by ingress-nginx directly.
+by Traefik directly.

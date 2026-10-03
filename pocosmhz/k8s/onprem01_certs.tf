@@ -59,7 +59,7 @@ resource "kubernetes_manifest" "cluster_issuer_letsencrypt" {
           {
             http01 = {
               ingress = {
-                class = var.k8s_clusters["onprem01"].cert_manager.ingress_class
+                ingressClassName = var.k8s_clusters["onprem01"].cert_manager.ingress_class
               }
             }
           }

@@ -1,0 +1,76 @@
+# Traefik chart 41.6.1 / Traefik v3.7.13.
+deployment:
+  kind: ${jsonencode(traefik_conf.kind)}
+
+ingressClass:
+  enabled: true
+  name: traefik
+  isDefaultClass: false
+
+providers:
+  kubernetesIngress:
+    enabled: true
+    ingressClass: traefik
+    publishedService:
+      enabled: true
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: false
+    safeNaming: false
+  kubernetesGateway:
+    enabled: false
+
+api:
+  dashboard: false
+
+ports:
+  web:
+    asDefault: true
+    exposedPort: 80
+    # cert-manager owns ACME; its solver routes must bypass the redirect.
+    allowACMEByPass: true
+    http:
+      aliasHeadersStrategy: delete
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    asDefault: true
+    exposedPort: 443
+    http:
+      aliasHeadersStrategy: delete
+      tls:
+        enabled: true
+    transport:
+      respondingTimeouts:
+        # Allow large Forgejo uploads without a short request-read deadline.
+        readTimeout: 0s
+  ircs:
+    asDefault: false
+    port: 6697
+    exposedPort: 6697
+    expose:
+      default: true
+    protocol: TCP
+
+service:
+%{ if traefik_conf.service_type == "LoadBalancer" }
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: ${jsonencode(irc_conf.irc_domain)}
+    external-dns.alpha.kubernetes.io/target: ${jsonencode(irc_conf.target)}
+    external-dns.alpha.kubernetes.io/ttl: "300"
+%{ endif }
+  spec:
+    type: ${jsonencode(traefik_conf.service_type)}
+%{ if traefik_conf.service_type == "LoadBalancer" }
+    loadBalancerIP: ${jsonencode(traefik_conf.load_balancer_ip)}
+    loadBalancerClass: ${jsonencode(traefik_conf.load_balancer_class)}
+    externalTrafficPolicy: ${jsonencode(traefik_conf.external_traffic_policy)}
+%{ endif }
+
+log:
+  level: INFO
+accessLog:
+  enabled: true

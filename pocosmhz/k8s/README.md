@@ -14,7 +14,7 @@ Every cluster element inside `k8s_clusters` var defines a certain amount of requ
 A brief, non-comprehensive description, would be:
 - Node list (needed for certain things)
 - Shared storage with Ceph CSI
-- Nginx ingress controller
+- Traefik ingress controller
 - Kube-VIP load balancer
 - cert-manager
 - external-dns
@@ -33,19 +33,42 @@ Make sure the selected credentials have permissions to access every project list
 
 See https://cloud.google.com/docs/authentication/external/set-up-adc for more information
 
-## Nginx ingress settings
-You can either set `externalTrafficPolicy` to `Local` and preserve source IP addresses or set to `""` and that would mean `Cluster`.
+## Traefik ingress settings
 
-When you use a `LoadBalancer` service for that, together with `kube-vip`, you must take into account that
+Traefik chart 41.6.1 runs in the `traefik` namespace, using the configured
+Deployment or DaemonSet and a kube-vip LoadBalancer Service. Public ports are
+80 (HTTP and cert-manager HTTP-01), 443 (HTTPS), and 6697 (IRC TLS passthrough).
+Applications and the cert-manager solver explicitly select ingress class
+`traefik`; the class is not marked as the cluster default.
 
-1. Read https://kube-vip.io/docs/usage/kubernetes-services/#external-traffic-policy-kube-vip-v050
-2. `svc_election` must be `true`.
+The `traefik` configuration block controls `kind`, `service_type` (normally
+`LoadBalancer`), `load_balancer_ip`, `load_balancer_class`, and
+`external_traffic_policy`. `ClusterIP` is available for staging without claiming
+the public VIP or publishing the IRC DNS annotation. Keep the configured
+traffic policy during controller migrations; `Local` requires kube-vip service
+election and ready controller endpoints on the elected node. PROXY protocol is
+not enabled. The current `Cluster` policy can obscure client source addresses.
 
-You can use `externalTrafficPolicy` to `Cluster` with any other service besides the ingress controller service and that will be fine.
+HTTP redirects to HTTPS except for `/.well-known/acme-challenge/`, which is
+handled by cert-manager solver Ingresses. Traefik consumes the existing HTTPS
+Secrets; cert-manager continues to own issuance and renewal. Ergo terminates
+IRC TLS and retains its certificate reload sidecar. The IRC TCP route accepts
+clients with or without SNI. Forgejo uses a 1 GiB buffering middleware; requests
+above 1 MiB can spill to the controller's temporary disk volume.
 
-Also, in order to get access to source IP address you must enable `use_proxy_protocol` setting on Nginx ingress.
+The Helm release installs Traefik CRDs and manages the IRC route and Forgejo
+middleware through `extraObjects`, avoiding OpenTofu plan-time discovery of
+new custom-resource schemas. Helm does not automatically upgrade or remove
+CRDs. For future chart upgrades, review the pinned chart's CRD changes and
+apply the updated Traefik CRDs before upgrading the release. Do not delete
+CRDs during upgrades: deleting them deletes their custom resources.
 
-And also, use the [unofficial solution](https://hub.docker.com/r/shilazi/kube-vip) suggested [here](https://github.com/kube-vip/kube-vip/issues/1027#issuecomment-2750374646).
+For a controller migration, stage the new controller as ClusterIP, temporarily
+allow both controller namespaces in application network policies, and test
+HTTPS, HTTP-01, uploads, WebSockets, and IRC before moving the VIP. Release the
+old controller's LoadBalancer address before assigning it to the replacement.
+Verify public access and issuance before uninstalling the old release. Existing
+IRC connections may reconnect during the handover.
 
 ## cert-manager
 

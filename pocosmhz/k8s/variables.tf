@@ -23,10 +23,10 @@ variable "k8s_clusters" {
       address   = string
       interface = string
     })
-    nginx = optional(object({
+    traefik = optional(object({
       kind                    = optional(string, "Deployment")
       external_traffic_policy = optional(string, "Local")
-      use_proxy_protocol      = optional(bool, false)
+      service_type            = optional(string, "LoadBalancer")
       load_balancer_class     = optional(string, "")
       load_balancer_ip        = optional(string, "")
     }))
@@ -38,7 +38,7 @@ variable "k8s_clusters" {
         enabled = bool
         ingress = object({
           enabled = bool
-          class   = optional(string, "nginx")
+          class   = optional(string, "traefik")
           domain  = optional(string, "grafana.k8s.example.com")
           target  = optional(string, "")
         })
@@ -64,10 +64,10 @@ variable "k8s_clusters" {
         email  = string
         server = string
       })
-      ingress_class = optional(string, "nginx")
+      ingress_class = optional(string, "traefik")
     }))
     forgejo = optional(object({
-      ingress_class  = optional(string, "nginx")
+      ingress_class  = optional(string, "traefik")
       target         = optional(string, "")
       domain         = optional(string, "forgejo.k8s.example.com")
       admin_username = optional(string, "forgejo_admin")
@@ -80,7 +80,7 @@ variable "k8s_clusters" {
       chat_domain         = optional(string, "chat.k8s.example.com")
       target              = optional(string, "")
       network_name        = optional(string, "ExampleIRC")
-      ingress_class       = optional(string, "nginx")
+      ingress_class       = optional(string, "traefik")
       storage_class       = optional(string, "csi-rbd-sc")
       ergo_storage_size   = optional(string, "10Gi")
       lounge_storage_size = optional(string, "10Gi")
@@ -141,10 +141,9 @@ variable "k8s_clusters" {
         address   = "192.168.1.100"
         interface = "eth0"
       }
-      nginx = {
+      traefik = {
         kind                    = "Deployment"
         external_traffic_policy = "Cluster"
-        use_proxy_protocol      = false
         load_balancer_class     = "kube-vip.io/kube-vip-class"
         load_balancer_ip        = "192.168.1.100"
       }
@@ -156,7 +155,7 @@ variable "k8s_clusters" {
           enabled = true
           ingress = {
             enabled = true
-            class   = "nginx"
+            class   = "traefik"
             domain  = "grafana.k8s.example.com"
             target  = "external01.example.com"
           }
@@ -182,10 +181,10 @@ variable "k8s_clusters" {
           email  = "email@example.com"
           server = "https://acme-v02.api.letsencrypt.org/directory"
         }
-        ingress_class = "nginx"
+        ingress_class = "traefik"
       }
       forgejo = {
-        ingress_class  = "nginx"
+        ingress_class  = "traefik"
         target         = "external01.example.com"
         domain         = "forgejo.example.com"
         admin_username = "forgejo_admin"
@@ -198,7 +197,7 @@ variable "k8s_clusters" {
         chat_domain         = "chat.k8s.example.com"
         target              = "external01.example.com"
         network_name        = "ExampleIRC"
-        ingress_class       = "nginx"
+        ingress_class       = "traefik"
         storage_class       = "csi-rbd-sc"
         ergo_storage_size   = "10Gi"
         lounge_storage_size = "10Gi"

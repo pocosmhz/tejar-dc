@@ -24,7 +24,7 @@ resource "kubernetes_secret_v1" "irc_oper" {
   type = "Opaque"
 }
 
-# HTTP-01 challenges are served through the existing nginx ingress controller.
+# HTTP-01 challenges are served through the Traefik ingress controller.
 # The IRC certificate is mounted into Ergo, which terminates TLS itself.
 resource "kubernetes_manifest" "irc_certificate" {
   manifest = {
@@ -46,7 +46,7 @@ resource "kubernetes_manifest" "irc_certificate" {
   }
   depends_on = [
     kubernetes_manifest.cluster_issuer_letsencrypt,
-    helm_release.ingress_nginx,
+    helm_release.traefik,
     helm_release.external_dns
   ]
 }
@@ -71,7 +71,7 @@ resource "kubernetes_manifest" "chat_certificate" {
   }
   depends_on = [
     kubernetes_manifest.cluster_issuer_letsencrypt,
-    helm_release.ingress_nginx,
+    helm_release.traefik,
     helm_release.external_dns
   ]
 }
@@ -100,7 +100,7 @@ resource "kubernetes_network_policy_v1" "ergo" {
     ingress {
       from {
         namespace_selector {
-          match_labels = { "kubernetes.io/metadata.name" = "ingress-nginx" }
+          match_labels = { "kubernetes.io/metadata.name" = kubernetes_namespace.traefik.id }
         }
       }
       from {
@@ -162,7 +162,7 @@ resource "kubernetes_network_policy_v1" "thelounge" {
     ingress {
       from {
         namespace_selector {
-          match_labels = { "kubernetes.io/metadata.name" = "ingress-nginx" }
+          match_labels = { "kubernetes.io/metadata.name" = kubernetes_namespace.traefik.id }
         }
       }
       ports {
@@ -259,6 +259,6 @@ resource "helm_release" "thelounge" {
     google_dns_record_set.irc_chat,
     kubernetes_network_policy_v1.thelounge,
     helm_release.ceph_csi_rbd,
-    helm_release.ingress_nginx
+    helm_release.traefik
   ]
 }

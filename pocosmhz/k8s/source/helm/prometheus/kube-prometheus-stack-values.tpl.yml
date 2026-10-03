@@ -1338,7 +1338,7 @@ grafana:
         - ${ prom_conf.grafana.ingress.domain }
 %{ else }
     annotations: {}
-      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/ingress.class: traefik
       # kubernetes.io/tls-acme: "true"
     ## Labels to be added to the Ingress
     ##

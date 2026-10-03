@@ -27,7 +27,7 @@ resource "kubernetes_network_policy_v1" "forgejo" {
       from {
         namespace_selector {
           match_labels = {
-            "kubernetes.io/metadata.name" = "ingress-nginx"
+            "kubernetes.io/metadata.name" = kubernetes_namespace.traefik.id
           }
         }
       }
@@ -104,6 +104,6 @@ resource "helm_release" "forgejo" {
     kubernetes_network_policy_v1.forgejo,
     helm_release.cert_manager,
     helm_release.ceph_csi_rbd,
-    helm_release.ingress_nginx
+    helm_release.traefik
   ]
 }
