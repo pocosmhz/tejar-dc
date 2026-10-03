@@ -70,9 +70,9 @@ resource "kubernetes_secret" "external_dns_sa_key" {
 
 resource "helm_release" "external_dns" {
   name       = "external-dns"
-  repository = "https://charts.bitnami.com/bitnami"
+  repository = "https://kubernetes-sigs.github.io/external-dns/"
   chart      = "external-dns"
-  version    = "9.0.3"
+  version    = "1.23.0"
   namespace  = kubernetes_namespace.external_dns.id
   values = [
     templatefile("${path.module}/source/helm/external-dns/external-dns-values.tpl.yml", {
@@ -80,11 +80,12 @@ resource "helm_release" "external_dns" {
       google_project       = var.k8s_clusters["onprem01"].providers.gcp.project
       google_sa_secret     = kubernetes_secret.external_dns_sa_key.metadata[0].name
       google_sa_secret_key = "credentials.json"
-      txtowner_id          = ""
+      txtowner_id          = "default"
       policy               = "sync"
-      service_account = yamlencode({
+      service_account = {
         create = false
-      })
+        name   = "default"
+      }
       domain_filters = yamlencode({
         domainFilters = [var.k8s_clusters["onprem01"].external_dns.zone.dnsname]
       })
@@ -95,5 +96,50 @@ resource "helm_release" "external_dns" {
       })
     })
   ]
-  timeout = "1200"
+  depends_on = [kubernetes_network_policy_v1.external_dns]
+  timeout    = "1200"
+}
+
+# Preserve the Bitnami chart's access policy under independent OpenTofu ownership.
+# Use a distinct name so Helm can remove its old policy during the chart migration.
+resource "kubernetes_network_policy_v1" "external_dns" {
+  metadata {
+    name      = "external-dns-access"
+    namespace = kubernetes_namespace.external_dns.id
+  }
+  spec {
+    pod_selector {
+      match_labels = {
+        "app.kubernetes.io/instance" = "external-dns"
+        "app.kubernetes.io/name"     = "external-dns"
+      }
+    }
+    policy_types = ["Ingress", "Egress"]
+    ingress {
+      ports {
+        port     = "7979"
+        protocol = "TCP"
+      }
+    }
+    egress {}
+  }
+}
+
+# The official chart does not create a PodDisruptionBudget.
+# Create the replacement after Helm removes the old budget to avoid overlapping PDBs.
+resource "kubernetes_pod_disruption_budget_v1" "external_dns" {
+  metadata {
+    name      = "external-dns-availability"
+    namespace = kubernetes_namespace.external_dns.id
+  }
+  spec {
+    max_unavailable = "1"
+    selector {
+      match_labels = {
+        "app.kubernetes.io/instance" = "external-dns"
+        "app.kubernetes.io/name"     = "external-dns"
+      }
+    }
+  }
+  depends_on = [helm_release.external_dns]
 }

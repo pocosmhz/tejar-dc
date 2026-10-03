@@ -81,6 +81,37 @@ old controller's LoadBalancer address before assigning it to the replacement.
 Verify public access and issuance before uninstalling the old release. Existing
 IRC connections may reconnect during the handover.
 
+## external-dns
+
+`onprem01_dns.tf` pins the official Kubernetes SIGs external-dns chart 1.23.0
+(application 0.23.0), replacing Bitnami chart 9.0.3 / application 0.18.0. The
+full upstream values file remains at
+`source/helm/external-dns/external-dns-values.tpl.yml`, with the existing
+template variables supplying the Google project, credential Secret, domain
+filter, policy, service account and metrics settings.
+
+The controller watches Services and Ingresses, reuses the Google credential
+Secret and Kubernetes `default` service account, and retains TXT owner
+`default` and policy `sync`. Keep `enable-legacy-annotation-prefix` enabled
+while application manifests use `external-dns.alpha.kubernetes.io/*`; version
+0.22 changed the default annotation prefix. The official chart uses `Recreate`
+to avoid overlapping DNS writers. Existing DNS records remain served while
+the controller restarts.
+
+The NetworkPolicy and PodDisruptionBudget are managed separately in OpenTofu
+because the official chart does not provide them. The replacement policy is
+created before the Helm migration, preserving ingress on TCP 7979 and
+unrestricted egress. The replacement budget is created after Helm removes
+the old one, retaining `maxUnavailable: 1` without overlapping budgets.
+
+The 0.19–0.23 release notes require no intermediate data migration for this
+Google provider, TXT registry and Service/Ingress configuration. Before
+applying the chart migration, back up the DNS zone and run the target image
+with the rendered arguments plus `--dry-run --once`. Check for unexpected
+record creation, deletion, target or ownership changes, then apply the
+OpenTofu plan and verify reconciliation and public records. See the
+[official upgrade playbook](https://kubernetes-sigs.github.io/external-dns/latest/docs/version-update-playbook/).
+
 ## Prometheus stack
 
 `onprem01_prometheus.tf` pins kube-prometheus-stack chart 91.9.0, including
