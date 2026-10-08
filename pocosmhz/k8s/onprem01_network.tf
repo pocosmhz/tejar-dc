@@ -1,8 +1,8 @@
 # Networking components
 # 1. kube-vip
-# 2. Nginx Ingress Controller
+# Traefik is defined in onprem01_traefik.tf.
 
-resource "kubernetes_namespace" "kube_vip_system" {
+resource "kubernetes_namespace_v1" "kube_vip_system" {
   metadata {
     name = "kube-vip-system"
   }
@@ -12,37 +12,11 @@ resource "helm_release" "kube_vip" {
   name       = "kube-vip"
   repository = "https://kube-vip.github.io/helm-charts"
   chart      = "kube-vip"
-  version    = "0.6.6"
-  namespace  = kubernetes_namespace.kube_vip_system.id
+  version    = "0.11.1"
+  namespace  = kubernetes_namespace_v1.kube_vip_system.id
   values = [
     templatefile("${path.module}/source/helm/kube-vip/kube-vip-values.tpl.yml", {
       kube_vip = var.k8s_clusters["onprem01"].kube_vip
     })
   ]
 }
-
-resource "kubernetes_namespace" "ingress_nginx" {
-  metadata {
-    name = "ingress-nginx"
-  }
-}
-
-resource "helm_release" "ingress_nginx" {
-  name       = "ingress-nginx"
-  chart      = "ingress-nginx"
-  repository = "https://kubernetes.github.io/ingress-nginx"
-  namespace  = kubernetes_namespace.ingress_nginx.id
-  version    = "4.13.0"
-  values = [
-    templatefile("${path.module}/source/helm/nginx/nginx-ingress-values.tpl.yml", {
-      nginx_conf = var.k8s_clusters["onprem01"].nginx
-      irc_conf   = var.k8s_clusters["onprem01"].irc
-    })
-  ]
-}
-
-# To test the Nginx Ingress Controller, you can expose it as a LoadBalancer service:
-# kubectl expose deployment ingress-nginx-controller   \
-#  --port=80 --target-port=80     --type=LoadBalancer --name http1 \
-#     --load-balancer-ip=192.168.18.210
-# And this provides:

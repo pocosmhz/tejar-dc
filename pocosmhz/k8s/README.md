@@ -14,7 +14,7 @@ Every cluster element inside `k8s_clusters` var defines a certain amount of requ
 A brief, non-comprehensive description, would be:
 - Node list (needed for certain things)
 - Shared storage with Ceph CSI
-- Nginx ingress controller
+- Traefik ingress controller
 - Kube-VIP load balancer
 - cert-manager
 - external-dns
@@ -33,19 +33,224 @@ Make sure the selected credentials have permissions to access every project list
 
 See https://cloud.google.com/docs/authentication/external/set-up-adc for more information
 
-## Nginx ingress settings
-You can either set `externalTrafficPolicy` to `Local` and preserve source IP addresses or set to `""` and that would mean `Cluster`.
+## Ceph CSI RBD
 
-When you use a `LoadBalancer` service for that, together with `kube-vip`, you must take into account that
+`onprem01_storage.tf` pins chart and driver 3.16.3, upgraded from 3.14.1.
+This conservative patch release explicitly lists Kubernetes 1.32–1.34 in
+its [tested matrix](https://github.com/ceph/ceph-csi/blob/v3.16.3/README.md),
+covering onprem01's 1.33.12. Version 3.18.1 and the newer 3.17.1 patch list
+1.34–1.36. Although 3.17.0 lists 1.33, 3.16.3 includes later backported
+fixes and avoids adopting the newer minor's behavior changes.
 
-1. Read https://kube-vip.io/docs/usage/kubernetes-services/#external-traffic-policy-kube-vip-v050
-2. `svc_election` must be `true`.
+The template is the full upstream 3.16.3 values file with the existing
+`ceph_conf` variables, monitor list, read affinity, default StorageClass
+and credential Secret settings retained. Bundled sidecars are registrar
+2.15.0, provisioner 6.0.0, attacher 4.10.0, resizer 2.0.0 and snapshotter
+8.4.0. Their published minimum/recommended Kubernetes versions fit 1.33;
+optional snapshot-class creation and fencing remain disabled.
 
-You can use `externalTrafficPolicy` to `Cluster` with any other service besides the ingress controller service and that will be fine.
+The chart adds controller-publish Secret parameters that Kubernetes cannot
+add to the immutable `csi-rbd-sc`. The Helm release runs
+`scripts/preserve-ceph-rbd-storageclass.py` as a post-renderer (Python 3,
+standard library only). It removes only those two parameters from the
+rendered existing class, retaining its name, parameters, default status and
+Helm ownership. It rejects missing, duplicated or unexpected class layouts.
+Do not remove this post-renderer without a separate StorageClass migration.
+The chart's `extraDeploy` path was not used because its template concatenates
+the document separator with the object and produces invalid YAML.
 
-Also, in order to get access to source IP address you must enable `use_proxy_protocol` setting on Nginx ingress.
+`nodeplugin.updateStrategy` is `OnDelete` so Helm upgrades do not restart all
+nodeplugins automatically. After each staged upgrade, restart and verify
+one nodeplugin pod at a time; Helm success alone does not establish that
+all nodeplugins run the new image. Allow up to 20 minutes for the controller
+rollout. Before applying, establish Ceph health and application backups,
+then use consecutive stages 3.14.1 to 3.15.1 to 3.16.3. Verify disposable PVC
+provisioning, write/remount, expansion and deletion, and existing workload
+health at each stage. Preserve application PVCs/PVs throughout.
 
-And also, use the [unofficial solution](https://hub.docker.com/r/shilazi/kube-vip) suggested [here](https://github.com/kube-vip/kube-vip/issues/1027#issuecomment-2750374646).
+Upstream recommends the Ceph-CSI Operator from 3.16 onward. Helm is explicitly
+deprecated in 3.18 and scheduled for removal in 3.19. The project's current
+support window covers the latest and preceding minor, so 3.16 is outside
+that window despite its documented Kubernetes compatibility and recent
+patch release. Treat this pin as a compatibility bridge, not a long-term
+maintenance solution. Review the
+[operator migration guide](https://github.com/ceph/ceph-csi-operator/blob/main/docs/migration.md)
+when planning the Kubernetes upgrade.
+
+The [3.16.3 release notes](https://github.com/ceph/ceph-csi/releases/tag/v3.16.3)
+include AES256 Ceph key support, which needs a compatible kernel. Keep the
+existing key format on the Linux 6.1 nodes. Nodeplugin RBAC also gains
+`list` and `watch` on Secrets; review the expanded access before deployment.
+Consult the [upgrade guide](https://github.com/ceph/ceph-csi/blob/v3.16.3/docs/ceph-csi-upgrade.md)
+for consecutive minor upgrades.
+
+On 2026-10-08 the migration was deployed through 3.14.1 to 3.15.1 to
+3.16.3. Before rollout, application writers were gracefully stopped and all
+seven RBD volumes were verified to have no watchers, then snapshotted with
+name `pre-csi-upgrade-20261008T214205Z` in pool `kubernetes`. Applications
+and their operators were restored to their original replica counts. These
+snapshots remain on the same Ceph cluster and are not independent backups.
+Keep them until the recovery window has closed; removal is a separate action.
+
+At both stages, disposable volumes passed provisioning, persistent writes,
+cross-node remount, online expansion and deletion checks. The probe visited
+all three nodes and expanded from 1 GiB to 2 GiB to 3 GiB. The original
+StorageClass UID and parameters and all seven production PV identities and
+CSI settings were preserved. Final CSI pods were ready with zero restarts,
+application pods were ready and Elasticsearch was green. All 65 Ceph PGs
+remained `active+clean`; the pre-existing `AUTH_INSECURE_*` health checks
+were unchanged and authentication settings were not modified. The final
+targeted and full OpenTofu plans reported no changes.
+
+## kube-vip
+
+kube-vip uses Helm chart 0.11.1 with the container image explicitly pinned to
+`ghcr.io/kube-vip/kube-vip:v1.2.4` in
+`source/helm/kube-vip/kube-vip-values.tpl.yml`, overriding the chart's default
+v1.2.3 image. This includes the fix for
+[endpoint watch recovery (#1685)](https://github.com/kube-vip/kube-vip/issues/1685):
+a terminal watch error could stop watching endpoints and remove the Service VIP
+without recovering. Review this image pin alongside the chart's default image
+and release notes during future upgrades.
+
+## Traefik ingress settings
+
+Traefik chart 41.6.1 runs in the `traefik` namespace, using the configured
+Deployment or DaemonSet and a kube-vip LoadBalancer Service. Public ports are
+80 (HTTP and cert-manager HTTP-01), 443 (HTTPS), and 6697 (IRC TLS passthrough).
+Applications and the cert-manager solver explicitly select ingress class
+`traefik`; the class is not marked as the cluster default.
+
+The `traefik` configuration block controls `kind`, `service_type` (normally
+`LoadBalancer`), `load_balancer_ip`, `load_balancer_class`, and
+`external_traffic_policy`. `ClusterIP` is available for staging without claiming
+the public VIP or publishing the IRC DNS annotation. Keep the configured
+traffic policy during controller migrations; `Local` requires kube-vip service
+election and ready controller endpoints on the elected node. PROXY protocol is
+not enabled. The current `Cluster` policy can obscure client source addresses.
+
+HTTP redirects to HTTPS except for `/.well-known/acme-challenge/`, which is
+handled by cert-manager solver Ingresses. Traefik consumes the existing HTTPS
+Secrets; cert-manager continues to own issuance and renewal. Ergo terminates
+IRC TLS and retains its certificate reload sidecar. The IRC TCP route accepts
+clients with or without SNI. Forgejo uses a 1 GiB buffering middleware; requests
+above 1 MiB can spill to the controller's temporary disk volume.
+
+The Helm release installs Traefik CRDs and manages the IRC route and Forgejo
+middleware through `extraObjects`, avoiding OpenTofu plan-time discovery of
+new custom-resource schemas. Helm does not automatically upgrade or remove
+CRDs. For future chart upgrades, review the pinned chart's CRD changes and
+apply the updated Traefik CRDs before upgrading the release. Do not delete
+CRDs during upgrades: deleting them deletes their custom resources.
+
+For a controller migration, stage the new controller as ClusterIP, temporarily
+allow both controller namespaces in application network policies, and test
+HTTPS, HTTP-01, uploads, WebSockets, and IRC before moving the VIP. Release the
+old controller's LoadBalancer address before assigning it to the replacement.
+Verify public access and issuance before uninstalling the old release. Existing
+IRC connections may reconnect during the handover.
+
+## external-dns
+
+`onprem01_dns.tf` pins the official Kubernetes SIGs external-dns chart 1.23.0
+(application 0.23.0), replacing Bitnami chart 9.0.3 / application 0.18.0. The
+full upstream values file remains at
+`source/helm/external-dns/external-dns-values.tpl.yml`, with the existing
+template variables supplying the Google project, credential Secret, domain
+filter, policy, service account and metrics settings.
+
+The controller watches Services and Ingresses, reuses the Google credential
+Secret and Kubernetes `default` service account, and retains TXT owner
+`default` and policy `sync`. Keep `enable-legacy-annotation-prefix` enabled
+while application manifests use `external-dns.alpha.kubernetes.io/*`; version
+0.22 changed the default annotation prefix. The official chart uses `Recreate`
+to avoid overlapping DNS writers. Existing DNS records remain served while
+the controller restarts.
+
+The NetworkPolicy and PodDisruptionBudget are managed separately in OpenTofu
+because the official chart does not provide them. The replacement policy is
+created before the Helm migration, preserving ingress on TCP 7979 and
+unrestricted egress. The replacement budget is created after Helm removes
+the old one, retaining `maxUnavailable: 1` without overlapping budgets.
+
+The 0.19–0.23 release notes require no intermediate data migration for this
+Google provider, TXT registry and Service/Ingress configuration. Before
+applying the chart migration, back up the DNS zone and run the target image
+with the rendered arguments plus `--dry-run --once`. Check for unexpected
+record creation, deletion, target or ownership changes, then apply the
+OpenTofu plan and verify reconciliation and public records. See the
+[official upgrade playbook](https://kubernetes-sigs.github.io/external-dns/latest/docs/version-update-playbook/).
+
+## Prometheus stack
+
+`onprem01_prometheus.tf` pins kube-prometheus-stack chart 91.9.0, including
+Prometheus 3.15.0, Prometheus Operator 0.94.1, and Grafana 13.2.3. The full
+upstream chart values remain in
+`source/helm/prometheus/kube-prometheus-stack-values.tpl.yml`, with the
+`prom_conf` variables supplying Grafana credentials, ingress and persistence
+settings, and Prometheus storage size. Grafana and Prometheus retain their
+existing Ceph RBD volumes; Grafana uses a StatefulSet.
+
+The chart's `crds.upgradeJob` runs before upgrades to apply the matching
+Operator CRDs with server-side apply. `forceConflicts` allows the hook to own
+schema fields originally installed by the OpenTofu Helm provider. Do not delete
+CRDs during upgrades, because that also deletes their monitoring resources.
+
+The migration from chart 75.10.0 was performed through chart 83.7.0 / Grafana
+12.4.3, updating installed plugins before moving to Grafana 13. The supplied
+Prometheus overview dashboard changed UID; its obsolete duplicate registration
+was cleaned through file provisioning and the current dashboard reprovisioned.
+Back up the Grafana database and plugins and review the
+[stack upgrade notes](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/UPGRADE.md)
+and [Grafana upgrade guide](https://grafana.com/docs/grafana/latest/upgrade-guide/)
+before future upgrades. The new chart uses distroless images and authenticates
+control-plane scrapes through its service-account token Secret and the
+`kube-root-ca.crt` ConfigMap, replacing filesystem token and CA references.
+
+## cert-manager
+
+The cert-manager CRDs are managed by `kubernetes_manifest` in
+`onprem01_certs.tf`, separately from the Helm release. Keep `crds.enabled`
+false in `source/helm/cert-manager/cert-manager-values.tpl.yml` so Helm does
+not take ownership of them.
+
+For future upgrades:
+
+1. Check the [supported releases](https://cert-manager.io/docs/releases/),
+   [upgrade instructions](https://cert-manager.io/docs/installation/upgrade/),
+   and release notes for every minor version between the installed and target
+   versions. Upgrade one minor version at a time, using its latest patch.
+2. Back up the cert-manager custom resources, the ACME account Secret in the
+   `cert-manager` namespace, and the TLS Secrets used by existing Certificates.
+   Store these backups privately because the Secret exports contain key material.
+3. For each version, update both the CRD download URL and Helm chart version in
+   `onprem01_certs.tf`. Replace the values template with that version's complete
+   chart `values.yaml`, retaining its comments, then reapply the local namespace
+   and `prometheus_enabled` template substitutions. Compare the old and new CRD
+   names. Existing CRDs should update in place; do not delete them, since doing
+   so also deletes their custom resources.
+4. Run `tofu plan -target=helm_release.cert_manager -out=/tmp/cert-manager.tfplan`.
+   Check that it updates the CRDs and Helm release without replacing or
+   destroying CRDs, then run `tofu apply /tmp/cert-manager.tfplan`. The Helm
+   release depends on the CRDs, so they are updated first.
+5. After each step, confirm the controller, webhook, and cainjector Deployments
+   have rolled out and the ClusterIssuer and Certificates remain Ready. Run a
+   full `tofu plan` after the final step to check for remaining changes.
+
+## Elasticsearch and Kibana
+
+ECK operator 3.5.0 manages Elasticsearch `es01` and Kibana in the
+`elastic-system` namespace. Both run version 8.19.22; Kibana inherits the
+Elasticsearch version and is enabled by the optional `kibana` object under
+`elasticsearch.clusters.es01`. Access Kibana at
+[kibana.k8s.example.com](https://kibana.k8s.example.com). The administrator
+username is `elastic`, with the same password for Elasticsearch and Kibana.
+With `kubectl` configured for `onprem01`, retrieve it from ECK's Secret:
+
+```sh
+kubectl -n elastic-system get secret es01-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d
+printf '\n'
+```
 
 ## Ergo IRC
 
@@ -202,9 +407,9 @@ In order to compile and use BitchX in 2026 under Debian 13 you can follow these 
     ```
 
 7. Use it:
-```Shell
-$ BitchX -ssl -n myuser 'irc.example.com,6697,myuser:mypassword'
-```
+    ```Shell
+    $ BitchX -ssl -n myuser 'irc.example.com,6697,myuser:mypassword'
+    ```
 
 BitchX uses commas to separate the server, port, and server-password fields
 here. Ergo expects the server password in `account:password` form; using colons

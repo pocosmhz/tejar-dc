@@ -6,6 +6,8 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   # tag: "v0.7.0"
+  # Chart 0.11.1 defaults to v1.2.3; v1.2.4 fixes endpoint watch recovery (#1685).
+  tag: "v1.2.4"
 
 config:
   address: "${ kube_vip.address }"
@@ -16,12 +18,12 @@ env:
   vip_arp: "true"
   lb_enable: "true"
   lb_port: "6443"
-  vip_cidr: "32"
+  vip_subnet: "32"
   cp_enable: "false"
   svc_enable: "true"
   svc_election: "true"
   vip_leaderelection: "false"
-  # prometheus_server: ":2112"
+  prometheus_server: ":2112"
 
 extraArgs: {}
   # Specify additional arguments to kube-vip
@@ -53,6 +55,9 @@ envFrom: []
 extraLabels: {}
   # Specify extra labels to be added to DaemonSet (and therefore to Pods)
 
+annotations: {}
+  # Specify annotations to be added to DaemonSet
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
@@ -80,6 +85,11 @@ securityContext:
       - NET_RAW
     drop:
       - ALL
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

@@ -20,6 +20,19 @@ serviceAccounts:
 # Configuration for the CSI to connect to the cluster
 # Ref: https://github.com/ceph/ceph-csi/blob/devel/examples/README.md
 # Example:
+# csiConfig:
+#   - clusterID: "<cluster-id>"
+#     monitors:
+#       - "<MONValue1>"
+#       - "<MONValue2>"
+#     rbd:
+#       netNamespaceFilePath: "{{ .kubeletDir }}/plugins/{{ .driverName }}/net"
+#       mirrorDaemonCount: 1
+#     readAffinity:
+#       enabled: true
+#       crushLocationLabels:
+#         - topology.kubernetes.io/region
+#         - topology.kubernetes.io/zone
 csiConfig:
   - clusterID: "${ ceph_conf.cluster_fsid }"
     monitors:
@@ -99,7 +112,8 @@ nodeplugin:
   # system-node-critical which is high priority
   priorityClassName: system-node-critical
   # if you are using rbd-nbd client set this value to OnDelete
-  updateStrategy: RollingUpdate
+  # Restart nodeplugin pods one node at a time after each approved upgrade.
+  updateStrategy: OnDelete
 
   httpMetrics:
     # Metrics only available for cephcsi/cephcsi => 1.2.0
@@ -144,14 +158,14 @@ nodeplugin:
   registrar:
     image:
       repository: registry.k8s.io/sig-storage/csi-node-driver-registrar
-      tag: v2.13.0
+      tag: v2.15.0
       pullPolicy: IfNotPresent
     resources: {}
 
   plugin:
     image:
       repository: quay.io/cephcsi/cephcsi
-      tag: v3.14.1
+      tag: v3.16.3
       pullPolicy: IfNotPresent
     resources: {}
 
@@ -166,6 +180,9 @@ nodeplugin:
   podSecurityContext: {}
 
   podAnnotations: {}
+
+  # enable fencing
+  fencing: false
 
 provisioner:
   name: provisioner
@@ -208,6 +225,9 @@ provisioner:
   # enable hostnetwork for provisioner pod. default is false
   # useful for deployments where the podNetwork has no access to ceph
   enableHostNetwork: false
+
+  # enable fencing
+  fencing: false
 
   httpMetrics:
     # Metrics only available for cephcsi/cephcsi => 1.2.0
@@ -252,7 +272,7 @@ provisioner:
   provisioner:
     image:
       repository: registry.k8s.io/sig-storage/csi-provisioner
-      tag: v5.1.0
+      tag: v6.0.0
       pullPolicy: IfNotPresent
     resources: {}
     args:
@@ -272,7 +292,7 @@ provisioner:
     enabled: true
     image:
       repository: registry.k8s.io/sig-storage/csi-attacher
-      tag: v4.8.0
+      tag: v4.10.0
       pullPolicy: IfNotPresent
     resources: {}
     args:
@@ -289,7 +309,7 @@ provisioner:
     enabled: true
     image:
       repository: registry.k8s.io/sig-storage/csi-resizer
-      tag: v1.13.1
+      tag: v2.0.0
       pullPolicy: IfNotPresent
     resources: {}
     args:
@@ -304,7 +324,7 @@ provisioner:
   snapshotter:
     image:
       repository: registry.k8s.io/sig-storage/csi-snapshotter
-      tag: v8.2.0
+      tag: v8.4.0
       pullPolicy: IfNotPresent
     resources: {}
     args:
@@ -357,9 +377,10 @@ storageClass:
 
   # Annotations for the storage class
   # Example:
+  # annotations:
+  #   storageclass.kubernetes.io/is-default-class: "true"
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
-  # annotations: {}
 
   # (required) String representing a Ceph cluster to provision storage from.
   # Should be unique across all Ceph clusters in use for provisioning,
@@ -515,6 +536,8 @@ storageClass:
   provisionerSecretNamespace: ""
   controllerExpandSecret: csi-rbd-secret
   controllerExpandSecretNamespace: ""
+  controllerPublishSecret: csi-rbd-secret
+  controllerPublishSecretNamespace: ""
   nodeStageSecret: csi-rbd-secret
   nodeStageSecretNamespace: ""
   # Specify the filesystem type of the volume. If not specified,
@@ -527,6 +550,79 @@ storageClass:
   # Example:
   # mountOptions:
   #   - discard
+
+volumeSnapshotClass:
+  # Specifies whether the VolumeSnapshotClass should be created
+  create: false
+  name: csi-rbdplugin-snapclass
+
+  # Annotations for the VolumeSnapshotClass
+  # Example:
+  # annotations:
+  #   storageclass.kubernetes.io/is-default-class: "true"
+  annotations: {}
+
+  # Labels for the VolumeSnapshotClass
+  # Example:
+  # labels:
+  #   velero.io/csi-volumesnapshot-class: "true"
+  labels: {}
+
+  # String representing a Ceph cluster to provision storage snapshot from.
+  # Should be unique across all Ceph clusters in use for provisioning,
+  # cannot be greater than 36 bytes in length, and should remain immutable for
+  # the lifetime of the VolumeSnapshotClass in use.
+  # Ensure to create an entry in the configmap named ceph-csi-config, based on
+  # csi-config-map-sample.yaml, to accompany the string chosen to
+  # represent the Ceph cluster in clusterID below
+  clusterID: <cluster-id>
+
+  # Prefix to use for naming RBD snapshots.
+  # If omitted, defaults to "csi-snap-".
+  # snapshotNamePrefix: "foo-bar-"
+  snapshotNamePrefix: ""
+
+  # The secrets have to contain user and/or Ceph admin credentials.
+  snapshotterSecret: csi-rbd-secret
+  # If the Namespaces are not specified, the secrets are assumed to
+  # be in the Release namespace.
+  snapshotterSecretNamespace: ""
+
+  deletionPolicy: Delete
+
+volumeGroupSnapshotClass:
+  # Specifies whether the VolumeGroupSnapshotClass should be created
+  create: false
+  name: csi-rbdplugin-groupsnapclass
+
+  # Annotations for the VolumeGroupSnapshotClass
+  # Example:
+  # annotations:
+  #   storageclass.kubernetes.io/is-default-class: "true"
+  annotations: {}
+
+  # String representing a Ceph cluster to provision storage from.
+  # Should be unique across all Ceph clusters in use for provisioning,
+  # cannot be greater than 36 bytes in length, and should remain immutable for
+  # the lifetime of the VolumeGroupSnapshotClass in use
+  clusterID: <cluster-id>
+
+  # (required) Ceph pool into which the RBD image shall be created
+  # (optional) if topologyConstrainedPools is provided
+  # eg: pool: replicapool
+  pool: replicapool
+
+  # (optional) Prefix to use for naming RBD groups.
+  # If omitted, defaults to "csi-vol-group-".
+  volumeGroupNamePrefix: ""
+
+  # The secrets have to contain user and/or Ceph admin credentials.
+  groupSnapshotterSecret: csi-rbd-secret
+  # If the Namespaces are not specified, the secrets are assumed to
+  # be in the Release namespace.
+  groupSnapshotterSecretNamespace: ""
+
+  deletionPolicy: Delete
 
 # Mount the host /etc/selinux inside pods to support
 # selinux-enabled filesystems

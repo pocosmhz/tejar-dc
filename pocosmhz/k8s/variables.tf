@@ -23,10 +23,10 @@ variable "k8s_clusters" {
       address   = string
       interface = string
     })
-    nginx = optional(object({
+    traefik = optional(object({
       kind                    = optional(string, "Deployment")
       external_traffic_policy = optional(string, "Local")
-      use_proxy_protocol      = optional(bool, false)
+      service_type            = optional(string, "LoadBalancer")
       load_balancer_class     = optional(string, "")
       load_balancer_ip        = optional(string, "")
     }))
@@ -38,7 +38,7 @@ variable "k8s_clusters" {
         enabled = bool
         ingress = object({
           enabled = bool
-          class   = optional(string, "nginx")
+          class   = optional(string, "traefik")
           domain  = optional(string, "grafana.k8s.example.com")
           target  = optional(string, "")
         })
@@ -64,25 +64,14 @@ variable "k8s_clusters" {
         email  = string
         server = string
       })
-      ingress_class = optional(string, "nginx")
-    }))
-    gitea = optional(object({
-      ingress_class       = optional(string, "nginx")
-      target              = optional(string, "")
-      load_balancer_class = optional(string, "kube-vip.io/kube-vip-class")
-      load_balancer_ip    = optional(string, "")
-      domain              = optional(string, "gitea.k8s.example.com")
-      admin_password      = optional(string, "")
-      postgresql_ha       = optional(bool, false)
-      pg_password         = optional(string, "pg_password")
-      pg_resource_preset  = optional(string, "micro")
+      ingress_class = optional(string, "traefik")
     }))
     forgejo = optional(object({
-      ingress_class  = optional(string, "nginx")
+      ingress_class  = optional(string, "traefik")
       target         = optional(string, "")
       domain         = optional(string, "forgejo.k8s.example.com")
       admin_username = optional(string, "forgejo_admin")
-      admin_email    = optional(string, "forgejo@local.domain")
+      admin_email    = optional(string, "forgejo@example.com")
       storage_class  = optional(string, "csi-rbd-sc")
       storage_size   = optional(string, "10Gi")
     }))
@@ -91,14 +80,53 @@ variable "k8s_clusters" {
       chat_domain         = optional(string, "chat.k8s.example.com")
       target              = optional(string, "")
       network_name        = optional(string, "ExampleIRC")
-      ingress_class       = optional(string, "nginx")
+      ingress_class       = optional(string, "traefik")
       storage_class       = optional(string, "csi-rbd-sc")
       ergo_storage_size   = optional(string, "10Gi")
       lounge_storage_size = optional(string, "10Gi")
     }))
+    elasticsearch = optional(object({
+      clusters = map(object({
+        version = optional(string, "8.19.22")
+        # Omit kibana to deploy Elasticsearch alone. Kibana shares its version.
+        kibana = optional(object({
+          domain        = string
+          target        = optional(string, "")
+          ingress_class = optional(string, "traefik")
+          replicas      = optional(number, 1)
+          resources = optional(object({
+            requests = optional(object({
+              cpu    = optional(string, "250m")
+              memory = optional(string, "1Gi")
+            }), {})
+            limits = optional(object({
+              cpu    = optional(string, "1")
+              memory = optional(string, "2Gi")
+            }), {})
+          }), {})
+        }))
+        node_sets = list(object({
+          name      = string
+          replicas  = number
+          disk_size = string
+          resources = object({
+            requests = object({
+              cpu    = string
+              memory = string
+            })
+            limits = object({
+              cpu    = string
+              memory = string
+            })
+          })
+          roles = list(string)
+        }))
+      }))
+    }))
   }))
   default = {
-    k8s01 = {
+    # Example configuration only: replace credentials, addresses and domains.
+    onprem01 = {
       providers = {
         gcp = {
           project = "my-gcp-project"
@@ -107,11 +135,11 @@ variable "k8s_clusters" {
         }
       }
       nodes = {
-        k8s01cp01 = {
+        onprem01cp01 = {
           ip_address = "192.168.1.5"
           ip_gateway = "192.168.1.1"
         }
-        k8s01cp02 = {
+        onprem01cp02 = {
           ip_address = "192.168.1.6"
           ip_gateway = "192.168.1.1"
         }
@@ -131,10 +159,10 @@ variable "k8s_clusters" {
         address   = "192.168.1.100"
         interface = "eth0"
       }
-      nginx = {
+      traefik = {
         kind                    = "Deployment"
         external_traffic_policy = "Cluster"
-        use_proxy_protocol      = false
+        service_type            = "LoadBalancer"
         load_balancer_class     = "kube-vip.io/kube-vip-class"
         load_balancer_ip        = "192.168.1.100"
       }
@@ -146,11 +174,11 @@ variable "k8s_clusters" {
           enabled = true
           ingress = {
             enabled = true
-            class   = "nginx"
+            class   = "traefik"
             domain  = "grafana.k8s.example.com"
             target  = "external01.example.com"
           }
-          password = "prom-operator"
+          password = "example-grafana-password"
           persistence = {
             enabled      = true
             storage_size = "10Gi"
@@ -170,25 +198,14 @@ variable "k8s_clusters" {
       cert_manager = {
         acme = {
           email  = "email@example.com"
-          server = "https://acme-v02.api.letsencrypt.org/directory"
+          server = "https://acme-staging-v02.api.letsencrypt.org/directory"
         }
-        ingress_class = "nginx"
-      }
-      gitea = {
-        ingress_class       = "nginx"
-        target              = "external01.example.com"
-        load_balancer_class = "kube-vip.io/kube-vip-class"
-        load_balancer_ip    = "192.168.1.100"
-        domain              = "gitea.example.com"
-        admin_password      = "r8sA8CPHD9!bt6d"
-        postgresql_ha       = false
-        pg_password         = "pg_password"
-        pg_resource_preset  = "micro"
+        ingress_class = "traefik"
       }
       forgejo = {
-        ingress_class  = "nginx"
+        ingress_class  = "traefik"
         target         = "external01.example.com"
-        domain         = "forgejo.example.com"
+        domain         = "forgejo.k8s.example.com"
         admin_username = "forgejo_admin"
         admin_email    = "forgejo@example.com"
         storage_class  = "csi-rbd-sc"
@@ -199,10 +216,45 @@ variable "k8s_clusters" {
         chat_domain         = "chat.k8s.example.com"
         target              = "external01.example.com"
         network_name        = "ExampleIRC"
-        ingress_class       = "nginx"
+        ingress_class       = "traefik"
         storage_class       = "csi-rbd-sc"
         ergo_storage_size   = "10Gi"
         lounge_storage_size = "10Gi"
+      }
+      elasticsearch = {
+        clusters = {
+          es01 = {
+            version = "8.19.22"
+            kibana = {
+              domain        = "kibana.k8s.example.com"
+              target        = "external01.example.com"
+              ingress_class = "traefik"
+              replicas      = 1
+              resources = {
+                requests = { cpu = "250m", memory = "1Gi" }
+                limits   = { cpu = "1", memory = "2Gi" }
+              }
+            }
+            node_sets = [
+              {
+                name      = "default"
+                replicas  = 2
+                disk_size = "20Gi"
+                resources = {
+                  requests = {
+                    cpu    = "1"
+                    memory = "2Gi"
+                  }
+                  limits = {
+                    cpu    = "1"
+                    memory = "2Gi"
+                  }
+                }
+                roles = ["master", "data", "ingest", "ml", "remote_cluster_client", "transform"]
+              }
+            ]
+          }
+        }
       }
     }
   }

@@ -6,7 +6,7 @@ ircHost: irc.k8s.example.com
 ircServiceIP: ""
 chatHost: chat.k8s.example.com
 networkName: ExampleIRC
-ingressClass: nginx
+ingressClass: traefik
 tlsSecretName: thelounge-https-tls
 storageClass: csi-rbd-sc
 storageSize: 10Gi

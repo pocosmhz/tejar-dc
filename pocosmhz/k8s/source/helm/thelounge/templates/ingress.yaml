@@ -4,7 +4,6 @@ metadata:
   name: thelounge
   annotations:
     external-dns.alpha.kubernetes.io/ingress-hostname-source: annotation-only
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   ingressClassName: {{ .Values.ingressClass | quote }}
   tls:

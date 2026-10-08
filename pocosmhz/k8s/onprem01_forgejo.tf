@@ -1,5 +1,5 @@
 # Forgejo SCM
-resource "kubernetes_namespace" "forgejo" {
+resource "kubernetes_namespace_v1" "forgejo" {
   metadata {
     name = "forgejo"
   }
@@ -10,7 +10,7 @@ resource "kubernetes_namespace" "forgejo" {
 resource "kubernetes_network_policy_v1" "forgejo" {
   metadata {
     name      = "forgejo-restricted"
-    namespace = kubernetes_namespace.forgejo.id
+    namespace = kubernetes_namespace_v1.forgejo.id
   }
 
   spec {
@@ -27,7 +27,7 @@ resource "kubernetes_network_policy_v1" "forgejo" {
       from {
         namespace_selector {
           match_labels = {
-            "kubernetes.io/metadata.name" = "ingress-nginx"
+            "kubernetes.io/metadata.name" = kubernetes_namespace_v1.traefik.id
           }
         }
       }
@@ -86,7 +86,7 @@ resource "helm_release" "forgejo" {
   name      = "forgejo"
   chart     = "oci://code.forgejo.org/forgejo-helm/forgejo"
   version   = "17.1.4"
-  namespace = kubernetes_namespace.forgejo.id
+  namespace = kubernetes_namespace_v1.forgejo.id
 
   atomic          = true
   cleanup_on_fail = true
@@ -100,10 +100,10 @@ resource "helm_release" "forgejo" {
   ]
 
   depends_on = [
-    kubernetes_namespace.forgejo,
+    kubernetes_namespace_v1.forgejo,
     kubernetes_network_policy_v1.forgejo,
     helm_release.cert_manager,
     helm_release.ceph_csi_rbd,
-    helm_release.ingress_nginx
+    helm_release.traefik
   ]
 }

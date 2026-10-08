@@ -2,23 +2,23 @@ terraform {
   required_version = ">= 1.1, < 1.11.4"
   required_providers {
     kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "2.37.1"
+      source  = "opentofu/kubernetes"
+      version = "3.3.0"
     }
     helm = {
-      source  = "hashicorp/helm"
-      version = "3.0.2"
+      source  = "opentofu/helm"
+      version = "3.3.0"
     }
     http = {
-      source  = "hashicorp/http"
-      version = "3.5.0"
+      source  = "opentofu/http"
+      version = "3.6.2"
     }
     google = {
-      source  = "hashicorp/google"
-      version = "6.43.0"
+      source  = "opentofu/google"
+      version = "8.5.0"
     }
     random = {
-      source  = "hashicorp/random"
+      source  = "opentofu/random"
       version = "3.9.1"
     }
   }
@@ -33,7 +33,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host     = data.terraform_remote_state.tejar_dc.outputs.k8s_cluster_data["onprem01"].external_url
     token    = data.terraform_remote_state.tejar_dc.outputs.k8s_cluster_data["onprem01"].terraform_token
     insecure = true

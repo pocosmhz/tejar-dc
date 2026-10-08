@@ -1,5 +1,5 @@
 # Private IRC service: Ergo over TLS and The Lounge over HTTPS.
-resource "kubernetes_namespace" "irc" {
+resource "kubernetes_namespace_v1" "irc" {
   metadata {
     name = "irc"
   }
@@ -15,7 +15,7 @@ resource "random_password" "irc_oper" {
 resource "kubernetes_secret_v1" "irc_oper" {
   metadata {
     name      = "ergo-oper-credentials"
-    namespace = kubernetes_namespace.irc.id
+    namespace = kubernetes_namespace_v1.irc.id
   }
   data = {
     username = "admin"
@@ -24,7 +24,7 @@ resource "kubernetes_secret_v1" "irc_oper" {
   type = "Opaque"
 }
 
-# HTTP-01 challenges are served through the existing nginx ingress controller.
+# HTTP-01 challenges are served through the Traefik ingress controller.
 # The IRC certificate is mounted into Ergo, which terminates TLS itself.
 resource "kubernetes_manifest" "irc_certificate" {
   manifest = {
@@ -32,7 +32,7 @@ resource "kubernetes_manifest" "irc_certificate" {
     kind       = "Certificate"
     metadata = {
       name      = "ergo-irc"
-      namespace = kubernetes_namespace.irc.id
+      namespace = kubernetes_namespace_v1.irc.id
     }
     spec = {
       secretName = "ergo-irc-tls"
@@ -46,7 +46,7 @@ resource "kubernetes_manifest" "irc_certificate" {
   }
   depends_on = [
     kubernetes_manifest.cluster_issuer_letsencrypt,
-    helm_release.ingress_nginx,
+    helm_release.traefik,
     helm_release.external_dns
   ]
 }
@@ -57,7 +57,7 @@ resource "kubernetes_manifest" "chat_certificate" {
     kind       = "Certificate"
     metadata = {
       name      = "thelounge-https"
-      namespace = kubernetes_namespace.irc.id
+      namespace = kubernetes_namespace_v1.irc.id
     }
     spec = {
       secretName = "thelounge-https-tls"
@@ -71,7 +71,7 @@ resource "kubernetes_manifest" "chat_certificate" {
   }
   depends_on = [
     kubernetes_manifest.cluster_issuer_letsencrypt,
-    helm_release.ingress_nginx,
+    helm_release.traefik,
     helm_release.external_dns
   ]
 }
@@ -90,7 +90,7 @@ resource "google_dns_record_set" "irc_chat" {
 resource "kubernetes_network_policy_v1" "ergo" {
   metadata {
     name      = "ergo-ingress"
-    namespace = kubernetes_namespace.irc.id
+    namespace = kubernetes_namespace_v1.irc.id
   }
   spec {
     pod_selector {
@@ -100,7 +100,7 @@ resource "kubernetes_network_policy_v1" "ergo" {
     ingress {
       from {
         namespace_selector {
-          match_labels = { "kubernetes.io/metadata.name" = "ingress-nginx" }
+          match_labels = { "kubernetes.io/metadata.name" = kubernetes_namespace_v1.traefik.id }
         }
       }
       from {
@@ -119,7 +119,7 @@ resource "kubernetes_network_policy_v1" "ergo" {
 resource "helm_release" "ergo" {
   name      = "ergo"
   chart     = "${path.module}/source/helm/ergo"
-  namespace = kubernetes_namespace.irc.id
+  namespace = kubernetes_namespace_v1.irc.id
 
   atomic          = true
   cleanup_on_fail = true
@@ -143,7 +143,7 @@ resource "helm_release" "ergo" {
 data "kubernetes_service_v1" "ergo" {
   metadata {
     name      = "ergo"
-    namespace = kubernetes_namespace.irc.id
+    namespace = kubernetes_namespace_v1.irc.id
   }
   depends_on = [helm_release.ergo]
 }
@@ -151,7 +151,7 @@ data "kubernetes_service_v1" "ergo" {
 resource "kubernetes_network_policy_v1" "thelounge" {
   metadata {
     name      = "thelounge-restricted"
-    namespace = kubernetes_namespace.irc.id
+    namespace = kubernetes_namespace_v1.irc.id
   }
   spec {
     pod_selector {
@@ -162,7 +162,7 @@ resource "kubernetes_network_policy_v1" "thelounge" {
     ingress {
       from {
         namespace_selector {
-          match_labels = { "kubernetes.io/metadata.name" = "ingress-nginx" }
+          match_labels = { "kubernetes.io/metadata.name" = kubernetes_namespace_v1.traefik.id }
         }
       }
       ports {
@@ -237,7 +237,7 @@ resource "kubernetes_network_policy_v1" "thelounge" {
 resource "helm_release" "thelounge" {
   name      = "thelounge"
   chart     = "${path.module}/source/helm/thelounge"
-  namespace = kubernetes_namespace.irc.id
+  namespace = kubernetes_namespace_v1.irc.id
 
   atomic          = true
   cleanup_on_fail = true
@@ -259,6 +259,6 @@ resource "helm_release" "thelounge" {
     google_dns_record_set.irc_chat,
     kubernetes_network_policy_v1.thelounge,
     helm_release.ceph_csi_rbd,
-    helm_release.ingress_nginx
+    helm_release.traefik
   ]
 }
