@@ -9,6 +9,10 @@ Please be welcome to my h{umble data center|ome lab}. See how it is built here:
 - [Part I](https://manuelmc.pocosmhz.org/2025/04/13/proxmox-home-cluster-i.html)
 - [Part II](https://manuelmc.pocosmhz.org/2025/04/15/proxmox-home-cluster-ii.html)
 
+We don't have a date yet, but we hope to soon join the Mugre Corp family in the new building that their CFO [Hugopvigo](https://github.com/Hugopvigo) has kindly made available to us here:
+
+<img src="img/future-location.png" title="Mugre Corp datacenter" alt="One day, maybe ..." width="350">
+
 ## The tools
 The foundation of Tejar DC is [Proxmox VE](https://www.proxmox.com/en/). The setup process is detailed in the section above.
 
