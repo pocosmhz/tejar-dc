@@ -33,6 +33,75 @@ Make sure the selected credentials have permissions to access every project list
 
 See https://cloud.google.com/docs/authentication/external/set-up-adc for more information
 
+## Ceph CSI RBD
+
+`onprem01_storage.tf` pins chart and driver 3.16.3, upgraded from 3.14.1.
+This conservative patch release explicitly lists Kubernetes 1.32–1.34 in
+its [tested matrix](https://github.com/ceph/ceph-csi/blob/v3.16.3/README.md),
+covering onprem01's 1.33.12. Version 3.18.1 and the newer 3.17.1 patch list
+1.34–1.36. Although 3.17.0 lists 1.33, 3.16.3 includes later backported
+fixes and avoids adopting the newer minor's behavior changes.
+
+The template is the full upstream 3.16.3 values file with the existing
+`ceph_conf` variables, monitor list, read affinity, default StorageClass
+and credential Secret settings retained. Bundled sidecars are registrar
+2.15.0, provisioner 6.0.0, attacher 4.10.0, resizer 2.0.0 and snapshotter
+8.4.0. Their published minimum/recommended Kubernetes versions fit 1.33;
+optional snapshot-class creation and fencing remain disabled.
+
+The chart adds controller-publish Secret parameters that Kubernetes cannot
+add to the immutable `csi-rbd-sc`. The Helm release runs
+`scripts/preserve-ceph-rbd-storageclass.py` as a post-renderer (Python 3,
+standard library only). It removes only those two parameters from the
+rendered existing class, retaining its name, parameters, default status and
+Helm ownership. It rejects missing, duplicated or unexpected class layouts.
+Do not remove this post-renderer without a separate StorageClass migration.
+The chart's `extraDeploy` path was not used because its template concatenates
+the document separator with the object and produces invalid YAML.
+
+`nodeplugin.updateStrategy` is `OnDelete` so Helm upgrades do not restart all
+nodeplugins automatically. After each staged upgrade, restart and verify
+one nodeplugin pod at a time; Helm success alone does not establish that
+all nodeplugins run the new image. Allow up to 20 minutes for the controller
+rollout. Before applying, establish Ceph health and application backups,
+then use consecutive stages 3.14.1 to 3.15.1 to 3.16.3. Verify disposable PVC
+provisioning, write/remount, expansion and deletion, and existing workload
+health at each stage. Preserve application PVCs/PVs throughout.
+
+Upstream recommends the Ceph-CSI Operator from 3.16 onward. Helm is explicitly
+deprecated in 3.18 and scheduled for removal in 3.19. The project's current
+support window covers the latest and preceding minor, so 3.16 is outside
+that window despite its documented Kubernetes compatibility and recent
+patch release. Treat this pin as a compatibility bridge, not a long-term
+maintenance solution. Review the
+[operator migration guide](https://github.com/ceph/ceph-csi-operator/blob/main/docs/migration.md)
+when planning the Kubernetes upgrade.
+
+The [3.16.3 release notes](https://github.com/ceph/ceph-csi/releases/tag/v3.16.3)
+include AES256 Ceph key support, which needs a compatible kernel. Keep the
+existing key format on the Linux 6.1 nodes. Nodeplugin RBAC also gains
+`list` and `watch` on Secrets; review the expanded access before deployment.
+Consult the [upgrade guide](https://github.com/ceph/ceph-csi/blob/v3.16.3/docs/ceph-csi-upgrade.md)
+for consecutive minor upgrades.
+
+On 2026-10-08 the migration was deployed through 3.14.1 to 3.15.1 to
+3.16.3. Before rollout, application writers were gracefully stopped and all
+seven RBD volumes were verified to have no watchers, then snapshotted with
+name `pre-csi-upgrade-20261008T214205Z` in pool `kubernetes`. Applications
+and their operators were restored to their original replica counts. These
+snapshots remain on the same Ceph cluster and are not independent backups.
+Keep them until the recovery window has closed; removal is a separate action.
+
+At both stages, disposable volumes passed provisioning, persistent writes,
+cross-node remount, online expansion and deletion checks. The probe visited
+all three nodes and expanded from 1 GiB to 2 GiB to 3 GiB. The original
+StorageClass UID and parameters and all seven production PV identities and
+CSI settings were preserved. Final CSI pods were ready with zero restarts,
+application pods were ready and Elasticsearch was green. All 65 Ceph PGs
+remained `active+clean`; the pre-existing `AUTH_INSECURE_*` health checks
+were unchanged and authentication settings were not modified. The final
+targeted and full OpenTofu plans reported no changes.
+
 ## kube-vip
 
 kube-vip uses Helm chart 0.11.1 with the container image explicitly pinned to
