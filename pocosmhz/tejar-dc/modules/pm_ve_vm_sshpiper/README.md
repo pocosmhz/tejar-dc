@@ -47,7 +47,7 @@ No modules.
 | <a name="input_node_id"></a> [node\_id](#input\_node\_id) | Proxmox node ID where the VM will be created | `string` | n/a | yes |
 | <a name="input_os_type"></a> [os\_type](#input\_os\_type) | Operating system type | `string` | `"l26"` | no |
 | <a name="input_snippets_datastore_id"></a> [snippets\_datastore\_id](#input\_snippets\_datastore\_id) | ID of the datastore where the snippets will be stored | `string` | `"local"` | no |
-| <a name="input_sshpiper_version"></a> [sshpiper\_version](#input\_sshpiper\_version) | Version of SSHPiper to be used | `string` | `"1.5.0"` | no |
+| <a name="input_sshpiper_version"></a> [sshpiper\_version](#input\_sshpiper\_version) | Version of SSHPiper to be used | `string` | `"1.6.1"` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags for the VM | `list(string)` | `[]` | no |
 | <a name="input_timezone"></a> [timezone](#input\_timezone) | Timezone for the VM | `string` | `"UTC"` | no |
 
