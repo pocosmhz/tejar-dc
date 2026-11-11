@@ -101,14 +101,13 @@ resource "proxmox_virtual_environment_vm" "vm" {
   network_device {
     bridge       = var.network_bridge
     disconnected = false
-    enabled      = true
     firewall     = true
     model        = "virtio"
   }
   serial_device {}
 }
 
-resource "proxmox_virtual_environment_haresource" "hares" {
+resource "proxmox_haresource" "hares" {
   for_each = var.ha_group != null ? { "enabled" = var.ha_group } : {}
 
   resource_id = "vm:${proxmox_virtual_environment_vm.vm.id}"
