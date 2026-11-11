@@ -3,7 +3,7 @@
 | Name | Version |
 | ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1, < 1.11.4 |
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1, <= 1.9.1 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10, <= 1.13.2 |
 | <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.106.0 |
 | <a name="requirement_proxmox"></a> [proxmox](#requirement\_proxmox) | 0.106.0 |
 | <a name="requirement_time"></a> [time](#requirement\_time) | 0.13.1 |
