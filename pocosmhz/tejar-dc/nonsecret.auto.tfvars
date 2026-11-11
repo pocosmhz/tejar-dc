@@ -9,7 +9,7 @@ proxmox_vm_default_images = {
     file_name = "debian-13-genericcloud-amd64.img"
   }
   ubuntu24 = {
-    url       = "https://cloud-images.ubuntu.com/minimal/releases/noble/release-20250727/ubuntu-24.04-minimal-cloudimg-amd64.img"
+    url       = "https://cloud-images.ubuntu.com/minimal/releases/noble/release-20261105/ubuntu-24.04-minimal-cloudimg-amd64.img"
     file_name = "ubuntu-24.04-minimal-cloudimg-amd64.img"
   }
 }
